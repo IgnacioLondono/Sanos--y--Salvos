@@ -1,0 +1,16 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: iam-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+security:
+  jwt:
+    secret: "sanos-y-salvos-super-secret-key-at-least-32-chars"

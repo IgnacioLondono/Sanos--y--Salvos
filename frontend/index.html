@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sanos y Salvos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <header class="topbar">
+    <h1>Sanos y Salvos</h1>
+    <p>Plataforma colaborativa para mascotas perdidas y encontradas</p>
+  </header>
+
+  <main class="layout">
+    <section class="card auth-card reveal">
+      <h2>Acceso IAM</h2>
+      <div class="grid-2">
+        <input id="email" placeholder="Correo" />
+        <input id="password" type="password" placeholder="Contraseña" />
+      </div>
+      <div class="actions">
+        <button id="btnRegister" class="btn">Registrar</button>
+        <button id="btnLogin" class="btn btn-strong">Login</button>
+      </div>
+      <p id="authStatus" class="hint">Sin sesión</p>
+    </section>
+
+    <section class="card reveal">
+      <h2>Resumen Operacional (BFF)</h2>
+      <div id="kpis" class="kpis"></div>
+      <button id="btnLoadDashboard" class="btn">Actualizar Dashboard</button>
+      <pre id="dashboardOut" class="output"></pre>
+    </section>
+
+    <section class="card reveal">
+      <h2>Nueva Mascota (Catálogo Biométrico)</h2>
+      <div class="grid-3">
+        <input id="petChip" placeholder="Chip" />
+        <input id="petName" placeholder="Nombre" />
+        <input id="petBreed" placeholder="Raza" />
+      </div>
+      <div class="grid-3">
+        <input id="petColor" placeholder="Color" />
+        <input id="petSize" placeholder="Tamaño" />
+        <input id="petOwner" placeholder="Owner ID" />
+      </div>
+      <button id="btnCreatePet" class="btn">Guardar Mascota</button>
+    </section>
+
+    <section class="card reveal">
+      <h2>Nuevo Reporte (Evento)</h2>
+      <div class="grid-3">
+        <input id="reportPetId" placeholder="Pet ID" />
+        <select id="reportType">
+          <option value="LOST">LOST</option>
+          <option value="FOUND">FOUND</option>
+        </select>
+        <input id="reportCommune" placeholder="Comuna" />
+      </div>
+      <div class="grid-3">
+        <input id="reportLat" placeholder="Latitud" />
+        <input id="reportLng" placeholder="Longitud" />
+        <input id="reportHealth" placeholder="Estado salud" />
+      </div>
+      <button id="btnCreateReport" class="btn">Guardar Reporte</button>
+    </section>
+
+    <section class="card reveal">
+      <h2>Capacity ONG / RRHH</h2>
+      <div class="grid-3">
+        <input id="capOrg" placeholder="Organización" />
+        <input id="capVolunteers" placeholder="Voluntarios" />
+        <input id="capHours" placeholder="Horas disponibles" />
+      </div>
+      <button id="btnCreateCapacity" class="btn">Guardar Capacity</button>
+    </section>
+
+    <section class="card reveal">
+      <h2>Repositorio Multimedia</h2>
+      <div class="grid-2">
+        <input id="mediaPetId" placeholder="Pet ID" />
+        <input id="mediaUrl" placeholder="URL foto" />
+      </div>
+      <button id="btnCreateMedia" class="btn">Guardar Foto</button>
+    </section>
+
+    <section class="card reveal full-width">
+      <h2>Consola</h2>
+      <pre id="log" class="output big"></pre>
+    </section>
+  </main>
+
+  <script src="./src/app.js"></script>
+</body>
+</html>

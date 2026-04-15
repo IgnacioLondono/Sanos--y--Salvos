@@ -1,0 +1,87 @@
+services:
+  iam-service:
+    build: ./services/iam-service
+    ports:
+      - "8091:8091"
+
+  pet-catalog-service:
+    build: ./services/pet-catalog-service
+    ports:
+      - "8092:8092"
+
+  reports-service:
+    build: ./services/reports-service
+    ports:
+      - "8093:8093"
+
+  geo-intelligence-service:
+    build: ./services/geo-intelligence-service
+    ports:
+      - "8094:8094"
+
+  media-service:
+    build: ./services/media-service
+    ports:
+      - "8095:8095"
+
+  matching-service:
+    build: ./services/matching-service
+    ports:
+      - "8096:8096"
+
+  capacity-service:
+    build: ./services/capacity-service
+    ports:
+      - "8097:8097"
+
+  audit-service:
+    build: ./services/audit-service
+    ports:
+      - "8098:8098"
+
+  bff:
+    build: ./bff
+    ports:
+      - "8081:8081"
+    environment:
+      PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
+      REPORTS_SERVICE_URL: http://reports-service:8093
+      MEDIA_SERVICE_URL: http://media-service:8095
+      CAPACITY_SERVICE_URL: http://capacity-service:8097
+    depends_on:
+      - pet-catalog-service
+      - reports-service
+      - media-service
+      - capacity-service
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    environment:
+      IAM_SERVICE_URL: http://iam-service:8091
+      PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
+      REPORTS_SERVICE_URL: http://reports-service:8093
+      GEO_SERVICE_URL: http://geo-intelligence-service:8094
+      MEDIA_SERVICE_URL: http://media-service:8095
+      MATCHING_SERVICE_URL: http://matching-service:8096
+      CAPACITY_SERVICE_URL: http://capacity-service:8097
+      AUDIT_SERVICE_URL: http://audit-service:8098
+      BFF_SERVICE_URL: http://bff:8081
+    depends_on:
+      - iam-service
+      - pet-catalog-service
+      - reports-service
+      - geo-intelligence-service
+      - media-service
+      - matching-service
+      - capacity-service
+      - audit-service
+      - bff
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway

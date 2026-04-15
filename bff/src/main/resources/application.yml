@@ -1,0 +1,12 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: bff
+
+services:
+  petCatalogUrl: ${PET_CATALOG_SERVICE_URL:http://localhost:8092}
+  mediaUrl: ${MEDIA_SERVICE_URL:http://localhost:8095}
+  reportsUrl: ${REPORTS_SERVICE_URL:http://localhost:8093}
+  capacityUrl: ${CAPACITY_SERVICE_URL:http://localhost:8097}

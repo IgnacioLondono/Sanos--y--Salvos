@@ -1,0 +1,98 @@
+package com.sanos.gateway.security;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import reactor.core.publisher.Mono;
+
+import java.time.Instant;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Component
+public class SecurityAndRateLimitFilter implements GlobalFilter, Ordered {
+
+    private static final Set<String> PUBLIC_PATHS = Set.of(
+            "/api/iam/login",
+            "/api/iam/register",
+            "/actuator/health"
+    );
+
+    private static final int MAX_REQUESTS_PER_MINUTE = 120;
+    private final Map<String, CounterWindow> counters = new ConcurrentHashMap<>();
+    private final JwtValidator jwtValidator;
+
+    public SecurityAndRateLimitFilter(JwtValidator jwtValidator) {
+        this.jwtValidator = jwtValidator;
+    }
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        ServerHttpRequest request = exchange.getRequest();
+        String path = request.getURI().getPath();
+
+        String clientIp = request.getRemoteAddress() != null
+                ? request.getRemoteAddress().getAddress().getHostAddress()
+                : "unknown";
+
+        if (!allowRequest(clientIp)) {
+            exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
+            return exchange.getResponse().setComplete();
+        }
+
+        if (isPublic(path)) {
+            return chain.filter(exchange);
+        }
+
+        String authHeader = request.getHeaders().getFirst("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+
+        try {
+            jwtValidator.parse(authHeader.substring(7));
+            return chain.filter(exchange);
+        } catch (Exception ex) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+    }
+
+    private boolean isPublic(String path) {
+        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+    }
+
+    private boolean allowRequest(String clientIp) {
+        long currentMinute = Instant.now().getEpochSecond() / 60;
+        CounterWindow window = counters.computeIfAbsent(clientIp, k -> new CounterWindow(currentMinute, 0));
+        synchronized (window) {
+            if (window.minute != currentMinute) {
+                window.minute = currentMinute;
+                window.count = 0;
+            }
+            window.count++;
+            return window.count <= MAX_REQUESTS_PER_MINUTE;
+        }
+    }
+
+    @Override
+    public int getOrder() {
+        return -1;
+    }
+
+    private static class CounterWindow {
+        long minute;
+        int count;
+
+        CounterWindow(long minute, int count) {
+            this.minute = minute;
+            this.count = count;
+        }
+    }
+}

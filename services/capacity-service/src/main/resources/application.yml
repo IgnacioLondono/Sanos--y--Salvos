@@ -1,0 +1,12 @@
+server:
+  port: 8097
+
+spring:
+  application:
+    name: capacity-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
