@@ -4,6 +4,18 @@ server:
 spring:
   application:
     name: capacity-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/db_capacity?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${SPRING_DATASOURCE_USERNAME:sanos}
+    password: ${SPRING_DATASOURCE_PASSWORD:sanos_pwd}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
 
 management:
   endpoints:

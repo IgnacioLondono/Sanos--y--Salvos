@@ -3,100 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sanos y Salvos</title>
+  <title>Sanos y Salvos | Login</title>
+  <meta
+    name="description"
+    content="Login ciudadano de Sanos y Salvos."
+  />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
   <link rel="stylesheet" href="./src/styles.css" />
 </head>
 <body>
-  <div class="bg-orb orb-a"></div>
-  <div class="bg-orb orb-b"></div>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="ambient ambient-c"></div>
 
-  <header class="topbar">
-    <h1>Sanos y Salvos</h1>
-    <p>Plataforma colaborativa para mascotas perdidas y encontradas</p>
-  </header>
+  <div class="auth-viewport">
+    <section class="auth-card reveal">
+      <div class="brand-lockup auth-brand">
+        <img class="brand-logo" src="./src/logo.svg" alt="Logo de Sanos y Salvos" />
+        <div>
+          <h1 class="auth-title">Sanos y Salvos</h1>
+          <p class="auth-subtitle">Acceso ciudadano</p>
+        </div>
+      </div>
 
-  <main class="layout">
-    <section class="card auth-card reveal">
-      <h2>Acceso IAM</h2>
-      <div class="grid-2">
-        <input id="email" placeholder="Correo" />
-        <input id="password" type="password" placeholder="Contraseña" />
+      <div class="form-grid one-col">
+        <label class="field">
+          <span>Correo</span>
+          <input id="email" type="email" placeholder="tu-correo@dominio.cl" />
+        </label>
+        <label class="field">
+          <span>Contrasena</span>
+          <input id="password" type="password" placeholder="Tu contrasena" />
+        </label>
       </div>
-      <div class="actions">
-        <button id="btnRegister" class="btn">Registrar</button>
-        <button id="btnLogin" class="btn btn-strong">Login</button>
+
+      <div class="action-row auth-actions">
+        <button id="btnLogin" class="btn btn-primary">Iniciar sesion</button>
       </div>
-      <p id="authStatus" class="hint">Sin sesión</p>
+
+      <p id="authStatus" class="inline-feedback">Ingresa tus credenciales para continuar</p>
+
+      <div class="auth-links">
+        <a href="./register.html">Crear cuenta nueva</a>
+      </div>
     </section>
+  </div>
 
-    <section class="card reveal">
-      <h2>Resumen Operacional (BFF)</h2>
-      <div id="kpis" class="kpis"></div>
-      <button id="btnLoadDashboard" class="btn">Actualizar Dashboard</button>
-      <pre id="dashboardOut" class="output"></pre>
-    </section>
-
-    <section class="card reveal">
-      <h2>Nueva Mascota (Catálogo Biométrico)</h2>
-      <div class="grid-3">
-        <input id="petChip" placeholder="Chip" />
-        <input id="petName" placeholder="Nombre" />
-        <input id="petBreed" placeholder="Raza" />
-      </div>
-      <div class="grid-3">
-        <input id="petColor" placeholder="Color" />
-        <input id="petSize" placeholder="Tamaño" />
-        <input id="petOwner" placeholder="Owner ID" />
-      </div>
-      <button id="btnCreatePet" class="btn">Guardar Mascota</button>
-    </section>
-
-    <section class="card reveal">
-      <h2>Nuevo Reporte (Evento)</h2>
-      <div class="grid-3">
-        <input id="reportPetId" placeholder="Pet ID" />
-        <select id="reportType">
-          <option value="LOST">LOST</option>
-          <option value="FOUND">FOUND</option>
-        </select>
-        <input id="reportCommune" placeholder="Comuna" />
-      </div>
-      <div class="grid-3">
-        <input id="reportLat" placeholder="Latitud" />
-        <input id="reportLng" placeholder="Longitud" />
-        <input id="reportHealth" placeholder="Estado salud" />
-      </div>
-      <button id="btnCreateReport" class="btn">Guardar Reporte</button>
-    </section>
-
-    <section class="card reveal">
-      <h2>Capacity ONG / RRHH</h2>
-      <div class="grid-3">
-        <input id="capOrg" placeholder="Organización" />
-        <input id="capVolunteers" placeholder="Voluntarios" />
-        <input id="capHours" placeholder="Horas disponibles" />
-      </div>
-      <button id="btnCreateCapacity" class="btn">Guardar Capacity</button>
-    </section>
-
-    <section class="card reveal">
-      <h2>Repositorio Multimedia</h2>
-      <div class="grid-2">
-        <input id="mediaPetId" placeholder="Pet ID" />
-        <input id="mediaUrl" placeholder="URL foto" />
-      </div>
-      <button id="btnCreateMedia" class="btn">Guardar Foto</button>
-    </section>
-
-    <section class="card reveal full-width">
-      <h2>Consola</h2>
-      <pre id="log" class="output big"></pre>
-    </section>
-  </main>
-
-  <script src="./src/app.js"></script>
+  <script src="./src/config.js"></script>
+  <script src="./src/shared.js"></script>
+  <script src="./src/index-auth.js"></script>
 </body>
 </html>

@@ -1,61 +1,185 @@
 services:
+  mysql:
+    image: mysql:8.4
+    container_name: sanos-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sanosysalvos
+      MYSQL_USER: sanos
+      MYSQL_PASSWORD: sanos_pwd
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - sanos-net
+
   iam-service:
     build: ./services/iam-service
+    container_name: sanos-iam
     ports:
       - "8091:8091"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_iam?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+      SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
 
   pet-catalog-service:
     build: ./services/pet-catalog-service
+    container_name: sanos-pets
     ports:
       - "8092:8092"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_pets?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
 
   reports-service:
     build: ./services/reports-service
+    container_name: sanos-reports
     ports:
       - "8093:8093"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_reports?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
 
   geo-intelligence-service:
     build: ./services/geo-intelligence-service
+    container_name: sanos-geo
     ports:
       - "8094:8094"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
 
   media-service:
     build: ./services/media-service
+    container_name: sanos-media
     ports:
       - "8095:8095"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_media?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
 
   matching-service:
     build: ./services/matching-service
+    container_name: sanos-matching
     ports:
       - "8096:8096"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_matching?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+      PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
+      REPORTS_SERVICE_URL: http://reports-service:8093
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
 
   capacity-service:
     build: ./services/capacity-service
+    container_name: sanos-capacity
     ports:
       - "8097:8097"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_capacity?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
 
   audit-service:
     build: ./services/audit-service
+    container_name: sanos-audit
     ports:
       - "8098:8098"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_audit?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
 
   bff:
     build: ./bff
+    container_name: sanos-bff
     ports:
       - "8081:8081"
     environment:
+      IAM_SERVICE_URL: http://iam-service:8091
       PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
       REPORTS_SERVICE_URL: http://reports-service:8093
+      GEO_SERVICE_URL: http://geo-intelligence-service:8094
       MEDIA_SERVICE_URL: http://media-service:8095
+      MATCHING_SERVICE_URL: http://matching-service:8096
       CAPACITY_SERVICE_URL: http://capacity-service:8097
+      AUDIT_SERVICE_URL: http://audit-service:8098
     depends_on:
-      - pet-catalog-service
-      - reports-service
-      - media-service
-      - capacity-service
+      iam-service:
+        condition: service_started
+      pet-catalog-service:
+        condition: service_started
+      reports-service:
+        condition: service_started
+      geo-intelligence-service:
+        condition: service_started
+      media-service:
+        condition: service_started
+      matching-service:
+        condition: service_started
+      capacity-service:
+        condition: service_started
+      audit-service:
+        condition: service_started
+    networks:
+      - sanos-net
 
   gateway:
     build: ./gateway
+    container_name: sanos-gateway
     ports:
       - "8080:8080"
     environment:
@@ -68,20 +192,26 @@ services:
       CAPACITY_SERVICE_URL: http://capacity-service:8097
       AUDIT_SERVICE_URL: http://audit-service:8098
       BFF_SERVICE_URL: http://bff:8081
+      SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
     depends_on:
-      - iam-service
-      - pet-catalog-service
-      - reports-service
-      - geo-intelligence-service
-      - media-service
-      - matching-service
-      - capacity-service
-      - audit-service
-      - bff
+      bff:
+        condition: service_started
+    networks:
+      - sanos-net
 
   frontend:
     build: ./frontend
+    container_name: sanos-frontend
     ports:
       - "5173:80"
     depends_on:
       - gateway
+    networks:
+      - sanos-net
+
+volumes:
+  mysql_data:
+
+networks:
+  sanos-net:
+    driver: bridge

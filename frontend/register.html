@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sanos y Salvos | Crear cuenta</title>
+  <meta
+    name="description"
+    content="Registro ciudadano en Sanos y Salvos."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="ambient ambient-c"></div>
+
+  <div class="auth-viewport">
+    <section class="auth-card reveal">
+      <div class="brand-lockup auth-brand">
+        <img class="brand-logo" src="./src/logo.svg" alt="Logo de Sanos y Salvos" />
+        <div>
+          <h1 class="auth-title">Crear cuenta</h1>
+          <p class="auth-subtitle">Registro ciudadano validado</p>
+        </div>
+      </div>
+
+      <div class="requirements-box">
+        <strong>Requisitos de cuenta</strong>
+        <ul class="requirements-list">
+          <li>Correo valido con formato correcto.</li>
+          <li>Contrasena de minimo 10 caracteres con mayuscula, minuscula, numero y simbolo.</li>
+          <li>Nombre completo real y RUT con formato 12345678-9.</li>
+          <li>Telefono chileno valido (+56 9XXXXXXXX).</li>
+          <li>Aceptar terminos y politica de privacidad.</li>
+        </ul>
+      </div>
+
+      <div class="form-grid two-cols">
+        <label class="field">
+          <span>Nombre completo</span>
+          <input id="fullName" type="text" placeholder="Ignacio Londono" />
+        </label>
+        <label class="field">
+          <span>RUT</span>
+          <input id="rutDocument" type="text" placeholder="12345678-9" />
+        </label>
+        <label class="field">
+          <span>Correo</span>
+          <input id="email" type="email" placeholder="tu-correo@dominio.cl" />
+        </label>
+        <label class="field">
+          <span>Contrasena</span>
+          <input id="password" type="password" placeholder="Crea una contrasena" />
+        </label>
+        <label class="field">
+          <span>Comuna</span>
+          <input id="commune" type="text" placeholder="Providencia" />
+        </label>
+        <label class="field">
+          <span>Telefono</span>
+          <input id="phone" type="text" placeholder="+56 9 1234 5678" />
+        </label>
+        <label class="field">
+          <span>Direccion referencial</span>
+          <input id="address" type="text" placeholder="Av. Siempre Viva 123" />
+        </label>
+        <label class="field">
+          <span>Contacto de emergencia</span>
+          <input id="emergencyContactName" type="text" placeholder="Nombre del contacto" />
+        </label>
+        <label class="field">
+          <span>Telefono emergencia</span>
+          <input id="emergencyContactPhone" type="text" placeholder="+56 9 9876 5432" />
+        </label>
+      </div>
+
+      <div class="checks-grid">
+        <label class="check-line">
+          <input id="acceptTerms" type="checkbox" />
+          <span>Acepto los terminos de uso de la plataforma.</span>
+        </label>
+        <label class="check-line">
+          <input id="acceptPrivacy" type="checkbox" />
+          <span>Acepto la politica de privacidad y tratamiento de datos.</span>
+        </label>
+      </div>
+
+      <div class="action-row auth-actions">
+        <button id="btnRegister" class="btn btn-primary">Crear cuenta</button>
+      </div>
+
+      <p id="registerStatus" class="inline-feedback">Completa los datos para registrarte</p>
+
+      <div class="auth-links">
+        <a href="./index.html">Ya tengo cuenta, iniciar sesion</a>
+      </div>
+    </section>
+  </div>
+
+  <script src="./src/config.js"></script>
+  <script src="./src/shared.js"></script>
+  <script src="./src/register-auth.js"></script>
+</body>
+</html>

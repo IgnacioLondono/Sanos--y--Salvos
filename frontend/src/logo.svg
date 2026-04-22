@@ -1,0 +1,46 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="heartFill" x1="130" y1="96" x2="382" y2="268" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#88C873"/>
+      <stop offset="1" stop-color="#63A763"/>
+    </linearGradient>
+    <linearGradient id="handFill" x1="88" y1="312" x2="412" y2="312" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B9F1EB"/>
+      <stop offset="1" stop-color="#7CD8CC"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="256" cy="256" r="236" fill="#FFFFFF" fill-opacity="0.82"/>
+  <path
+    d="M256 282C232 260 190 232 165 204C143 180 138 145 158 123C180 98 218 101 242 128L256 144L270 128C294 101 332 98 354 123C374 145 369 180 347 204C322 232 280 260 256 282Z"
+    fill="url(#heartFill)"
+  />
+  <path
+    d="M175 265C167 223 188 187 226 170C264 153 309 167 337 206C351 226 359 251 359 278V317H168L175 265Z"
+    fill="#A8D8D0"
+  />
+  <path
+    d="M226 170C188 187 167 223 175 265L168 317H359V278C359 251 351 226 337 206C309 167 264 153 226 170Z"
+    stroke="#2E668F"
+    stroke-width="12"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path d="M235 210C229 223 226 239 226 257V317" stroke="#2E668F" stroke-width="12" stroke-linecap="round"/>
+  <path d="M281 225C296 231 307 245 310 262" stroke="#2E668F" stroke-width="12" stroke-linecap="round"/>
+  <path d="M307 227C316 218 331 221 336 232" stroke="#2E668F" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="274" cy="219" r="10" fill="#F1B14C"/>
+  <path d="M282 249L295 256" stroke="#2E668F" stroke-width="10" stroke-linecap="round"/>
+  <path d="M282 264H298" stroke="#2E668F" stroke-width="10" stroke-linecap="round"/>
+  <path d="M280 279L293 286" stroke="#2E668F" stroke-width="10" stroke-linecap="round"/>
+  <path
+    d="M131 334C157 305 189 288 226 283C251 279 280 281 312 289C332 294 350 302 367 316C382 328 391 344 390 362C388 388 364 408 338 409H192C171 409 153 404 138 394C121 383 112 366 111 347C111 341 118 340 123 342C136 347 148 348 159 345C168 343 173 339 176 332C180 321 188 314 199 310C214 304 233 304 255 311C271 316 288 324 308 336"
+    fill="url(#handFill)"
+    stroke="#2E668F"
+    stroke-width="12"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path d="M179 351H351" stroke="#2E668F" stroke-width="10" stroke-linecap="round"/>
+  <path d="M112 377C149 417 202 439 256 439C310 439 362 417 400 377" stroke="#86D7CC" stroke-width="14" stroke-linecap="round"/>
+</svg>

@@ -1,73 +1,54 @@
 package com.sanos.reportsservice.controller;
 
+import com.sanos.reportsservice.dto.ReportDto;
+import com.sanos.reportsservice.service.ReportService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reports")
+@CrossOrigin(origins = "*")
 public class ReportController {
 
-    private final Map<String, Map<String, Object>> store = new ConcurrentHashMap<>();
+    private final ReportService service;
 
-    @GetMapping("/health")
-    public Map<String, Object> health() {
-        return Map.of(
-                "service", "reports-service",
-                "status", "UP",
-                "timestamp", Instant.now().toString(),
-                "fields", "id,petId,type,status,healthStatus,latitude,longitude,commune,description"
-        );
+    public ReportController(ReportService service) {
+        this.service = service;
     }
 
     @GetMapping
-    public List<Map<String, Object>> findAll() {
-        return new ArrayList<>(store.values());
+    public List<ReportDto> listAll() { return service.listAll(); }
+
+    @PostMapping
+    public ResponseEntity<ReportDto> create(@RequestBody ReportDto req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> findById(@PathVariable String id) {
-        Map<String, Object> item = store.get(id);
-        if (item == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(item);
+    public ResponseEntity<ReportDto> byId(@PathVariable Long id) {
+        return service.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> create(@RequestBody Map<String, Object> body) {
-        String id = UUID.randomUUID().toString();
-        body.put("id", id);
-        body.putIfAbsent("createdAt", Instant.now().toString());
-        store.put(id, body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    @GetMapping("/pet/{petId}")
+    public List<ReportDto> byPet(@PathVariable Long petId) { return service.findByPet(petId); }
+
+    @GetMapping("/status/{status}")
+    public List<ReportDto> byStatus(@PathVariable String status) { return service.findByStatus(status); }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ReportDto> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        String newStatus = payload.getOrDefault("status", "ABIERTO");
+        return service.updateStatus(id, newStatus)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable String id, @RequestBody Map<String, Object> body) {
-        if (!store.containsKey(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        body.put("id", id);
-        body.put("updatedAt", Instant.now().toString());
-        store.put(id, body);
-        return ResponseEntity.ok(body);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        if (store.remove(id) == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/sample-payload")
-    public Map<String, Object> sample() {
-        return Map.of("example", "Use POST to create records for this service");
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Map.of("status", "UP", "service", "reports-service");
     }
 }

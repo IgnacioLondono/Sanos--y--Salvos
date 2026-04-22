@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sanos y Salvos | Login Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <div class="app-shell app-shell-auth">
+    <header class="top-nav reveal">
+      <a class="btn btn-ghost" href="./index.html">Volver al inicio</a>
+      <span class="pill">Zona administrativa exclusiva</span>
+    </header>
+
+    <main class="auth-main reveal">
+      <section class="glass-card section auth-screen narrow-screen">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Acceso admin</p>
+            <h2>Credenciales exclusivas</h2>
+          </div>
+          <span class="pill">Solo personal autorizado</span>
+        </div>
+
+        <div class="stack-list">
+          <article class="stack-item">
+            <strong>Uso interno</strong>
+            <p>Este acceso es independiente del portal ciudadano y habilita el panel de control global.</p>
+          </article>
+        </div>
+
+        <div class="form-grid one-col">
+          <label class="field">
+            <span>Usuario admin</span>
+            <input id="adminEmail" type="email" placeholder="admin@sanosysalvos.cl" />
+          </label>
+          <label class="field">
+            <span>Contrasena admin</span>
+            <input id="adminPassword" type="password" placeholder="Credencial exclusiva" />
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="btnAdminLogin" class="btn btn-primary">Ingresar al dashboard admin</button>
+        </div>
+
+        <p id="adminAuthStatus" class="inline-feedback">Esperando autenticacion administrativa</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="./src/config.js"></script>
+  <script src="./src/shared.js"></script>
+  <script src="./src/admin-auth.js"></script>
+</body>
+</html>

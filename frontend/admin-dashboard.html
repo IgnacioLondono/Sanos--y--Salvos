@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sanos y Salvos | Dashboard Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./src/styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="ambient ambient-c"></div>
+
+  <div class="app-shell">
+    <header class="top-nav reveal">
+      <div class="chip-row">
+        <span class="pill">Dashboard admin</span>
+        <span class="chip chip-soft" id="adminIdentity">Sesion admin activa</span>
+      </div>
+      <div class="action-row">
+        <a class="btn btn-ghost" href="./index.html">Inicio</a>
+        <button class="btn btn-secondary" id="btnAdminRefresh">Actualizar</button>
+        <button class="btn btn-primary" id="btnAdminLogout">Cerrar sesion admin</button>
+      </div>
+    </header>
+
+    <main class="page-grid">
+      <section class="glass-card section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Salud del ecosistema</p>
+            <h2>Estado de microservicios en ejecucion</h2>
+          </div>
+          <span class="pill">Gateway + 8 MS + BFF</span>
+        </div>
+        <div id="serviceHealthGrid" class="service-health-grid"></div>
+      </section>
+
+      <section class="glass-card section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Control global</p>
+            <h2>Indicadores ejecutivos</h2>
+          </div>
+          <span class="pill" id="adminStatus">Sincronizando...</span>
+        </div>
+        <div id="adminKpis" class="kpi-grid"></div>
+      </section>
+
+      <section class="glass-card section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Control de usuarios</p>
+            <h2>IAM y roles</h2>
+          </div>
+          <span class="pill">Acceso restringido</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="usersTable"></table>
+        </div>
+      </section>
+
+      <section class="glass-card section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Reportes y zonas</p>
+            <h2>Eventos recientes</h2>
+          </div>
+          <span class="pill">MS reportes</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="reportsTable"></table>
+        </div>
+      </section>
+
+      <section class="glass-card section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Capacidad activa</p>
+            <h2>Organizaciones y recursos</h2>
+          </div>
+          <span class="pill">MS capacity</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="capacityTable"></table>
+        </div>
+      </section>
+
+      <section class="glass-card section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Inteligencia geografica</p>
+            <h2>Mapa de incidencias</h2>
+          </div>
+          <span class="pill">MS geo-intelligence</span>
+        </div>
+        <div id="adminMap" class="map-canvas"></div>
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-dot legend-low"></span> Riesgo bajo</span>
+          <span class="legend-item"><span class="legend-dot legend-mid"></span> Riesgo medio</span>
+          <span class="legend-item"><span class="legend-dot legend-high"></span> Riesgo alto</span>
+          <span class="legend-item"><span class="legend-dot legend-lost"></span> Reporte perdida</span>
+          <span class="legend-item"><span class="legend-dot legend-found"></span> Reporte hallazgo</span>
+        </div>
+        <div class="table-wrap" style="margin-top: 18px;">
+          <table class="data-table" id="zonesTable"></table>
+        </div>
+      </section>
+
+      <section class="glass-card section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Motor de coincidencias</p>
+            <h2>Resultados matching & IA</h2>
+          </div>
+          <span class="pill">MS matching</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="matchingTable"></table>
+        </div>
+      </section>
+
+      <section class="glass-card section reveal">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Trazabilidad</p>
+            <h2>Auditoria y control de cambios</h2>
+          </div>
+          <span class="pill">MS audit</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="auditTable"></table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="./src/config.js"></script>
+  <script src="./src/shared.js"></script>
+  <script src="./src/admin-dashboard.js"></script>
+</body>
+</html>

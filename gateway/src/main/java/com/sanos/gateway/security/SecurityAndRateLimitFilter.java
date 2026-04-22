@@ -1,29 +1,39 @@
 package com.sanos.gateway.security;
 
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.core.Ordered;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class SecurityAndRateLimitFilter implements GlobalFilter, Ordered {
 
-    private static final Set<String> PUBLIC_PATHS = Set.of(
+    private static final List<String> PUBLIC_PREFIXES = List.of(
             "/api/iam/login",
             "/api/iam/register",
+            "/api/iam/health",
+            "/api/pets/health",
+            "/api/reports/health",
+            "/api/zones/health",
+            "/api/media/health",
+            "/api/matching/health",
+            "/api/capacity/health",
+            "/api/audit/health",
+            "/api/bff/health",
             "/actuator/health"
     );
 
-    private static final int MAX_REQUESTS_PER_MINUTE = 120;
+    private static final int MAX_REQUESTS_PER_MINUTE = 240;
     private final Map<String, CounterWindow> counters = new ConcurrentHashMap<>();
     private final JwtValidator jwtValidator;
 
@@ -35,6 +45,10 @@ public class SecurityAndRateLimitFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
+
+        if (HttpMethod.OPTIONS.equals(request.getMethod())) {
+            return chain.filter(exchange);
+        }
 
         String clientIp = request.getRemoteAddress() != null
                 ? request.getRemoteAddress().getAddress().getHostAddress()
@@ -65,7 +79,7 @@ public class SecurityAndRateLimitFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublic(String path) {
-        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+        return PUBLIC_PREFIXES.stream().anyMatch(path::startsWith);
     }
 
     private boolean allowRequest(String clientIp) {

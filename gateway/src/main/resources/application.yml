@@ -12,8 +12,10 @@ spring:
             allowedOrigins:
               - "http://localhost:5173"
               - "http://localhost"
-            allowedMethods: [GET, POST, PUT, DELETE, OPTIONS]
+              - "http://localhost:8080"
+            allowedMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
             allowedHeaders: "*"
+            allowCredentials: false
       routes:
         - id: iam
           uri: ${IAM_SERVICE_URL:http://localhost:8091}
@@ -27,7 +29,7 @@ spring:
           uri: ${REPORTS_SERVICE_URL:http://localhost:8093}
           predicates:
             - Path=/api/reports/**
-        - id: geo
+        - id: geo-zones
           uri: ${GEO_SERVICE_URL:http://localhost:8094}
           predicates:
             - Path=/api/zones/**
@@ -52,6 +54,12 @@ spring:
           predicates:
             - Path=/api/bff/**
 
-security:
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+sanos:
   jwt:
-    secret: "sanos-y-salvos-super-secret-key-at-least-32-chars"
+    secret: ${SANOS_JWT_SECRET:sanos-y-salvos-super-secret-key-at-least-32-chars}

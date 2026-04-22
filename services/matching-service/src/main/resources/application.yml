@@ -4,9 +4,25 @@ server:
 spring:
   application:
     name: matching-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/db_matching?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${SPRING_DATASOURCE_USERNAME:sanos}
+    password: ${SPRING_DATASOURCE_PASSWORD:sanos_pwd}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+
+services:
+  reportsUrl: ${REPORTS_SERVICE_URL:http://localhost:8093}
+  petCatalogUrl: ${PET_CATALOG_SERVICE_URL:http://localhost:8092}

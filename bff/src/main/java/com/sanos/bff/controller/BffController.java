@@ -2,33 +2,27 @@ package com.sanos.bff.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Supplier;
 
 @RestController
 @RequestMapping("/api/bff")
+@CrossOrigin(origins = "*")
 public class BffController {
 
     private final RestTemplate restTemplate;
 
-    @Value("")
-    private String petCatalogUrl;
-
-    @Value("")
-    private String mediaUrl;
-
-    @Value("")
-    private String reportsUrl;
-
-    @Value("")
-    private String capacityUrl;
+    @Value("${services.iamUrl}")        private String iamUrl;
+    @Value("${services.petCatalogUrl}") private String petCatalogUrl;
+    @Value("${services.mediaUrl}")      private String mediaUrl;
+    @Value("${services.reportsUrl}")    private String reportsUrl;
+    @Value("${services.capacityUrl}")   private String capacityUrl;
+    @Value("${services.matchingUrl}")   private String matchingUrl;
+    @Value("${services.zonesUrl}")      private String zonesUrl;
+    @Value("${services.auditUrl}")      private String auditUrl;
 
     public BffController(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -36,39 +30,102 @@ public class BffController {
 
     @GetMapping("/dashboard")
     public Map<String, Object> dashboard() {
-        List<?> pets = restTemplate.getForObject(petCatalogUrl + "/api/pets", List.class);
-        List<?> reports = restTemplate.getForObject(reportsUrl + "/api/reports", List.class);
-        List<?> capacity = restTemplate.getForObject(capacityUrl + "/api/capacity", List.class);
-        List<?> media = restTemplate.getForObject(mediaUrl + "/api/media", List.class);
+        Map<String, Object> serviceStatus = new LinkedHashMap<>();
+
+        List<?> pets      = safeList("pet-catalog-service",    serviceStatus, () -> restTemplate.getForObject(petCatalogUrl + "/api/pets",     List.class));
+        List<?> reports   = safeList("reports-service",        serviceStatus, () -> restTemplate.getForObject(reportsUrl    + "/api/reports",  List.class));
+        List<?> capacity  = safeList("capacity-service",       serviceStatus, () -> restTemplate.getForObject(capacityUrl   + "/api/capacity", List.class));
+        List<?> media     = safeList("media-service",          serviceStatus, () -> restTemplate.getForObject(mediaUrl      + "/api/media",    List.class));
+        List<?> matching  = safeList("matching-service",       serviceStatus, () -> restTemplate.getForObject(matchingUrl   + "/api/matching", List.class));
+        List<?> zones     = safeList("geo-intelligence-service", serviceStatus, () -> restTemplate.getForObject(zonesUrl    + "/api/zones",    List.class));
+        List<?> audit     = safeList("audit-service",          serviceStatus, () -> restTemplate.getForObject(auditUrl      + "/api/audit",    List.class));
+        List<?> users     = safeList("iam-service",            serviceStatus, () -> restTemplate.getForObject(iamUrl        + "/api/iam/users", List.class));
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("totalPets", pets != null ? pets.size() : 0);
-        result.put("totalReports", reports != null ? reports.size() : 0);
-        result.put("totalCapacityRecords", capacity != null ? capacity.size() : 0);
-        result.put("totalPhotos", media != null ? media.size() : 0);
-        result.put("pets", pets);
+        result.put("totalPets",             sizeOf(pets));
+        result.put("totalReports",          sizeOf(reports));
+        result.put("totalCapacityRecords",  sizeOf(capacity));
+        result.put("totalPhotos",           sizeOf(media));
+        result.put("totalMatchingRecords",  sizeOf(matching));
+        result.put("totalZones",            sizeOf(zones));
+        result.put("totalAuditEvents",      sizeOf(audit));
+        result.put("totalUsers",            sizeOf(users));
+        result.put("pets",       pets);
+        result.put("reports",    reports);
+        result.put("capacity",   capacity);
+        result.put("media",      media);
+        result.put("matching",   matching);
+        result.put("zones",      zones);
+        result.put("audit",      audit);
+        result.put("serviceStatus", serviceStatus);
+        return result;
+    }
+
+    @GetMapping("/map")
+    public Map<String, Object> mapOverview() {
+        Map<String, Object> serviceStatus = new LinkedHashMap<>();
+        List<?> reports = safeList("reports-service",           serviceStatus, () -> restTemplate.getForObject(reportsUrl + "/api/reports", List.class));
+        List<?> zones   = safeList("geo-intelligence-service",  serviceStatus, () -> restTemplate.getForObject(zonesUrl   + "/api/zones",   List.class));
+
+        Map<String, Object> result = new LinkedHashMap<>();
         result.put("reports", reports);
-        result.put("capacity", capacity);
-        result.put("media", media);
+        result.put("zones",   zones);
+        result.put("serviceStatus", serviceStatus);
         return result;
     }
 
     @GetMapping("/pet-overview/{petId}")
-    public ResponseEntity<Map<String, Object>> petOverview(@PathVariable String petId) {
-        List<?> pets = restTemplate.getForObject(petCatalogUrl + "/api/pets", List.class);
-        List<?> reports = restTemplate.getForObject(reportsUrl + "/api/reports", List.class);
-        List<?> media = restTemplate.getForObject(mediaUrl + "/api/media", List.class);
+    public ResponseEntity<Map<String, Object>> petOverview(@PathVariable Long petId) {
+        Map<String, Object> serviceStatus = new LinkedHashMap<>();
+
+        Object pet = safeObject("pet-catalog-service", serviceStatus,
+                () -> restTemplate.getForObject(petCatalogUrl + "/api/pets/" + petId, Object.class));
+        List<?> reports = safeList("reports-service", serviceStatus,
+                () -> restTemplate.getForObject(reportsUrl + "/api/reports/pet/" + petId, List.class));
+        List<?> media = safeList("media-service", serviceStatus,
+                () -> restTemplate.getForObject(mediaUrl + "/api/media/pet/" + petId, List.class));
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("petId", petId);
-        result.put("pets", pets);
-        result.put("reports", reports);
-        result.put("media", media);
+        result.put("pet",           pet);
+        result.put("reports",       reports);
+        result.put("media",         media);
+        result.put("serviceStatus", serviceStatus);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/health")
     public Map<String, Object> health() {
         return Map.of("status", "UP", "component", "bff");
+    }
+
+    private Integer sizeOf(List<?> list) {
+        return list == null ? 0 : list.size();
+    }
+
+    private List<?> safeList(String serviceName, Map<String, Object> serviceStatus, Supplier<List<?>> supplier) {
+        try {
+            List<?> data = supplier.get();
+            serviceStatus.put(serviceName, Map.of("status", "UP"));
+            return data == null ? List.of() : data;
+        } catch (Exception ex) {
+            serviceStatus.put(serviceName, Map.of("status", "DOWN", "error", sanitizeError(ex.getMessage())));
+            return List.of();
+        }
+    }
+
+    private Object safeObject(String serviceName, Map<String, Object> serviceStatus, Supplier<Object> supplier) {
+        try {
+            Object data = supplier.get();
+            serviceStatus.put(serviceName, Map.of("status", "UP"));
+            return data;
+        } catch (Exception ex) {
+            serviceStatus.put(serviceName, Map.of("status", "DOWN", "error", sanitizeError(ex.getMessage())));
+            return null;
+        }
+    }
+
+    private String sanitizeError(String message) {
+        if (message == null || message.isBlank()) return "unavailable";
+        return message.length() > 120 ? message.substring(0, 120) + "..." : message;
     }
 }

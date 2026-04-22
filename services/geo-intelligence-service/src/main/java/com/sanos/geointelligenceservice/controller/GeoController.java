@@ -1,73 +1,92 @@
 package com.sanos.geointelligenceservice.controller;
 
+import com.sanos.geointelligenceservice.dto.ZoneDto;
+import com.sanos.geointelligenceservice.model.CoordenadaReporte;
+import com.sanos.geointelligenceservice.model.ZonaIncidencia;
+import com.sanos.geointelligenceservice.repository.CoordenadaReporteRepository;
+import com.sanos.geointelligenceservice.repository.ZonaIncidenciaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/zones")
+@CrossOrigin(origins = "*")
 public class GeoController {
 
-    private final Map<String, Map<String, Object>> store = new ConcurrentHashMap<>();
+    private final ZonaIncidenciaRepository zoneRepo;
+    private final CoordenadaReporteRepository coordRepo;
 
-    @GetMapping("/health")
-    public Map<String, Object> health() {
-        return Map.of(
-                "service", "geo-intelligence-service",
-                "status", "UP",
-                "timestamp", Instant.now().toString(),
-                "fields", "id,reportId,commune,latitude,longitude,riskLevel,incidenceScore"
-        );
+    public GeoController(ZonaIncidenciaRepository zoneRepo, CoordenadaReporteRepository coordRepo) {
+        this.zoneRepo = zoneRepo;
+        this.coordRepo = coordRepo;
     }
 
     @GetMapping
-    public List<Map<String, Object>> findAll() {
-        return new ArrayList<>(store.values());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> findById(@PathVariable String id) {
-        Map<String, Object> item = store.get(id);
-        if (item == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(item);
+    public List<ZoneDto> list() {
+        return zoneRepo.findAll().stream().map(this::toDto).toList();
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> create(@RequestBody Map<String, Object> body) {
-        String id = UUID.randomUUID().toString();
-        body.put("id", id);
-        body.putIfAbsent("createdAt", Instant.now().toString());
-        store.put(id, body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
-    }
+    public ResponseEntity<ZoneDto> create(@RequestBody ZoneDto req) {
+        ZonaIncidencia z = new ZonaIncidencia();
+        z.setNombreComuna(req.commune());
+        z.setNivelRiesgo(req.riskLevel());
+        z.setLatitud(req.latitude());
+        z.setLongitud(req.longitude());
+        z.setIdReporte(req.reportId());
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable String id, @RequestBody Map<String, Object> body) {
-        if (!store.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+        if (req.latitude() != null && req.longitude() != null) {
+            CoordenadaReporte coord = new CoordenadaReporte();
+            coord.setLatitud(req.latitude());
+            coord.setLongitud(req.longitude());
+            coord.setIdReporte(req.reportId());
+            coord = coordRepo.save(coord);
+            z.setIdCoordenada(coord.getIdCoordenada());
         }
-        body.put("id", id);
-        body.put("updatedAt", Instant.now().toString());
-        store.put(id, body);
-        return ResponseEntity.ok(body);
+
+        z = zoneRepo.save(z);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDto(z));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        if (store.remove(id) == null) {
-            return ResponseEntity.notFound().build();
+    @GetMapping("/commune/{commune}")
+    public List<ZoneDto> byCommune(@PathVariable String commune) {
+        return zoneRepo.findByNombreComunaIgnoreCase(commune).stream().map(this::toDto).toList();
+    }
+
+    @GetMapping("/risk-summary")
+    public Map<String, Long> riskSummary() {
+        Map<String, Long> grouped = zoneRepo.findAll().stream()
+                .collect(Collectors.groupingBy(
+                        z -> z.getNivelRiesgo() == null ? "INDEFINIDO" : z.getNivelRiesgo(),
+                        Collectors.counting()));
+        if (grouped.isEmpty()) {
+            return Map.of("INDEFINIDO", 0L);
         }
-        return ResponseEntity.noContent().build();
+        return grouped;
     }
 
-    @GetMapping("/sample-payload")
-    public Map<String, Object> sample() {
-        return Map.of("example", "Use POST to create records for this service");
+    @GetMapping("/coordinates")
+    public List<CoordenadaReporte> coordinates() {
+        return coordRepo.findAll();
+    }
+
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Map.of("status", "UP", "service", "geo-intelligence-service");
+    }
+
+    private ZoneDto toDto(ZonaIncidencia z) {
+        return new ZoneDto(
+                z.getIdZona(),
+                z.getNombreComuna(),
+                z.getNivelRiesgo(),
+                z.getLatitud(),
+                z.getLongitud(),
+                z.getIdReporte()
+        );
     }
 }

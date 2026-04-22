@@ -14,7 +14,7 @@ public class JwtValidator {
 
     private final SecretKey key;
 
-    public JwtValidator(@Value("") String secret) {
+    public JwtValidator(@Value("${sanos.jwt.secret}") String secret) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 

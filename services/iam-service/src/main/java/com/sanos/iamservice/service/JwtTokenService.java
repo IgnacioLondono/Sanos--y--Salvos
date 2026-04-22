@@ -16,18 +16,22 @@ import java.util.Map;
 public class JwtTokenService {
 
     private final SecretKey key;
+    private final long ttlHours;
 
-    public JwtTokenService(@Value("") String secret) {
+    public JwtTokenService(
+            @Value("${sanos.jwt.secret}") String secret,
+            @Value("${sanos.jwt.ttl-hours:4}") long ttlHours) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.ttlHours = ttlHours;
     }
 
     public String generateToken(String userId, String email, String role) {
         Instant now = Instant.now();
-        Instant expiration = now.plus(2, ChronoUnit.HOURS);
+        Instant expiration = now.plus(ttlHours, ChronoUnit.HOURS);
 
         return Jwts.builder()
                 .subject(userId)
-                .claims(Map.of("email", email, "role", role))
+                .claims(Map.of("email", email == null ? "" : email, "role", role == null ? "CITIZEN" : role))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
                 .signWith(key)

@@ -1,73 +1,69 @@
 package com.sanos.auditservice.controller;
 
+import com.sanos.auditservice.dto.AuditDto;
+import com.sanos.auditservice.model.LogAuditoria;
+import com.sanos.auditservice.repository.LogAuditoriaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/audit")
+@CrossOrigin(origins = "*")
 public class AuditController {
 
-    private final Map<String, Map<String, Object>> store = new ConcurrentHashMap<>();
+    private final LogAuditoriaRepository repo;
 
-    @GetMapping("/health")
-    public Map<String, Object> health() {
-        return Map.of(
-                "service", "audit-service",
-                "status", "UP",
-                "timestamp", Instant.now().toString(),
-                "fields", "id,entity,entityId,operation,payloadJson,createdAt,actor"
-        );
+    public AuditController(LogAuditoriaRepository repo) {
+        this.repo = repo;
     }
 
     @GetMapping
-    public List<Map<String, Object>> findAll() {
-        return new ArrayList<>(store.values());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> findById(@PathVariable String id) {
-        Map<String, Object> item = store.get(id);
-        if (item == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(item);
+    public List<AuditDto> list() {
+        return repo.findAll().stream().map(this::toDto).toList();
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> create(@RequestBody Map<String, Object> body) {
-        String id = UUID.randomUUID().toString();
-        body.put("id", id);
-        body.putIfAbsent("createdAt", Instant.now().toString());
-        store.put(id, body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    public ResponseEntity<AuditDto> create(@RequestBody AuditDto req) {
+        LogAuditoria l = new LogAuditoria();
+        l.setEntidad(req.entity());
+        l.setOperacion(req.operation());
+        l.setActor(req.actor());
+        l.setTablaAfectada(req.entity());
+        l.setAccionRealizada(req.operation());
+        l.setCambiosJson(req.changes());
+        l.setCreadoEn(LocalDateTime.now());
+        l = repo.save(l);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDto(l));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable String id, @RequestBody Map<String, Object> body) {
-        if (!store.containsKey(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        body.put("id", id);
-        body.put("updatedAt", Instant.now().toString());
-        store.put(id, body);
-        return ResponseEntity.ok(body);
+    @GetMapping("/entity/{entity}")
+    public List<AuditDto> byEntity(@PathVariable String entity) {
+        return repo.findByEntidadIgnoreCase(entity).stream().map(this::toDto).toList();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        if (store.remove(id) == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.noContent().build();
+    @GetMapping("/actor/{actor}")
+    public List<AuditDto> byActor(@PathVariable String actor) {
+        return repo.findByActorIgnoreCase(actor).stream().map(this::toDto).toList();
     }
 
-    @GetMapping("/sample-payload")
-    public Map<String, Object> sample() {
-        return Map.of("example", "Use POST to create records for this service");
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Map.of("status", "UP", "service", "audit-service");
+    }
+
+    private AuditDto toDto(LogAuditoria l) {
+        return new AuditDto(
+                l.getIdLog(),
+                l.getEntidad() == null ? l.getTablaAfectada() : l.getEntidad(),
+                l.getOperacion() == null ? l.getAccionRealizada() : l.getOperacion(),
+                l.getActor(),
+                l.getCambiosJson(),
+                l.getCreadoEn() != null ? l.getCreadoEn().toString() : null
+        );
     }
 }
