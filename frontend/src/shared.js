@@ -93,11 +93,18 @@
       headers.Authorization = `Bearer ${opts.token}`;
     }
 
-    const response = await fetch(`${settings.apiBaseUrl}${path}`, {
-      method,
-      headers,
-      body: opts.body ? JSON.stringify(opts.body) : undefined
-    });
+    let response;
+    try {
+      response = await fetch(`${settings.apiBaseUrl}${path}`, {
+        method,
+        headers,
+        body: opts.body ? JSON.stringify(opts.body) : undefined
+      });
+    } catch (error) {
+      throw new Error(
+        `No se pudo conectar con el backend (${settings.apiBaseUrl}). Verifica gateway encendido, URL API y CORS.`
+      );
+    }
 
     const text = await response.text();
     let data = null;
