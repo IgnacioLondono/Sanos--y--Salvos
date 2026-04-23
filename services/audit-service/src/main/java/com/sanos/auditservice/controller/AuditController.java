@@ -3,6 +3,12 @@ package com.sanos.auditservice.controller;
 import com.sanos.auditservice.dto.AuditDto;
 import com.sanos.auditservice.model.LogAuditoria;
 import com.sanos.auditservice.repository.LogAuditoriaRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/audit")
 @CrossOrigin(origins = "*")
+@Tag(name = "Auditoria", description = "Logs y notificaciones. Tablas: log_auditoria, notificaciones_sistema (db_audit).")
 public class AuditController {
 
     private final LogAuditoriaRepository repo;
@@ -22,11 +29,15 @@ public class AuditController {
         this.repo = repo;
     }
 
+    @Operation(summary = "Listar logs")
+    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = AuditDto.class)))
     @GetMapping
     public List<AuditDto> list() {
         return repo.findAll().stream().map(this::toDto).toList();
     }
 
+    @Operation(summary = "Registrar evento de auditoria", description = "Inserta log_auditoria.")
+    @ApiResponse(responseCode = "201", content = @Content(schema = @Schema(implementation = AuditDto.class)))
     @PostMapping
     public ResponseEntity<AuditDto> create(@RequestBody AuditDto req) {
         LogAuditoria l = new LogAuditoria();
@@ -41,16 +52,21 @@ public class AuditController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(l));
     }
 
+    @Operation(summary = "Logs por entidad")
     @GetMapping("/entity/{entity}")
-    public List<AuditDto> byEntity(@PathVariable String entity) {
+    public List<AuditDto> byEntity(
+            @Parameter(description = "Nombre entidad", required = true) @PathVariable String entity) {
         return repo.findByEntidadIgnoreCase(entity).stream().map(this::toDto).toList();
     }
 
+    @Operation(summary = "Logs por actor")
     @GetMapping("/actor/{actor}")
-    public List<AuditDto> byActor(@PathVariable String actor) {
+    public List<AuditDto> byActor(
+            @Parameter(description = "Actor", required = true) @PathVariable String actor) {
         return repo.findByActorIgnoreCase(actor).stream().map(this::toDto).toList();
     }
 
+    @Operation(summary = "Salud del servicio")
     @GetMapping("/health")
     public Map<String, String> health() {
         return Map.of("status", "UP", "service", "audit-service");

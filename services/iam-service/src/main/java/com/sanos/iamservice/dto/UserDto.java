@@ -2,19 +2,21 @@ package com.sanos.iamservice.dto;
 
 import com.sanos.iamservice.model.ContactoUsuario;
 import com.sanos.iamservice.model.Usuario;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(name = "UserDto", description = "Vista de usuario para API (mapea tablas usuarios + contactos_usuario).")
 public record UserDto(
-        Long id,
-        String email,
-        String displayName,
-        String rut,
-        String commune,
-        String address,
-        String phone,
-        String emergencyContactName,
-        String emergencyContactPhone,
-        String role,
-        String createdAt
+        @Schema(description = "PK usuarios.id_usuario", example = "1") Long id,
+        @Schema(description = "Correo (contactos_usuario.correo_electronico)", example = "user@mail.cl") String email,
+        @Schema(description = "Nombre corto para UI", example = "Ana Perez") String displayName,
+        @Schema(description = "RUT con digito verificador", example = "12345678-9") String rut,
+        @Schema(description = "Comuna de residencia", example = "Providencia") String commune,
+        @Schema(description = "Direccion referencial") String address,
+        @Schema(description = "Telefono principal", example = "+56 9 1234 5678") String phone,
+        @Schema(description = "Nombre contacto de emergencia") String emergencyContactName,
+        @Schema(description = "Telefono contacto de emergencia") String emergencyContactPhone,
+        @Schema(description = "Rol IAM", example = "CITIZEN", allowableValues = {"CITIZEN", "ADMIN"}) String role,
+        @Schema(description = "Fecha registro ISO-8601", example = "2026-04-23T10:00:00") String createdAt
 ) {
     public static UserDto fromEntities(Usuario usuario, ContactoUsuario contacto) {
         String email = contacto != null ? contacto.getCorreoElectronico() : null;

@@ -1,46 +1,59 @@
 package com.sanos.reportsservice.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reportes_eventos")
+@Schema(name = "ReporteEvento", description = "Tabla **reportes_eventos** (db_reports).")
 public class ReporteEvento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_reporte")
+    @Schema(description = "PK id_reporte", accessMode = Schema.AccessMode.READ_ONLY)
     private Long idReporte;
 
     @Column(name = "id_mascota")
+    @Schema(description = "FK mascota", example = "1")
     private Long idMascota;
 
     @Column(name = "id_usuario_creador")
+    @Schema(description = "Usuario creador (id IAM)", example = "1")
     private Long idUsuarioCreador;
 
     @Column(name = "tipo_reporte", length = 20)
+    @Schema(description = "LOST / FOUND", example = "LOST")
     private String tipoReporte;
 
     @Column(name = "estado", length = 20)
+    @Schema(description = "Estado", example = "OPEN")
     private String estado;
 
     @Column(name = "comuna", length = 120)
+    @Schema(description = "Comuna")
     private String comuna;
 
     @Column(name = "descripcion", length = 500)
+    @Schema(description = "Descripcion libre")
     private String descripcion;
 
     @Column(name = "estado_salud", length = 120)
+    @Schema(description = "Estado de salud observado")
     private String estadoSalud;
 
     @Column(name = "latitud", precision = 10, scale = 6)
+    @Schema(description = "Latitud")
     private BigDecimal latitud;
 
     @Column(name = "longitud", precision = 10, scale = 6)
+    @Schema(description = "Longitud")
     private BigDecimal longitud;
 
     @Column(name = "fecha_creacion")
+    @Schema(description = "fecha_creacion")
     private LocalDateTime fechaCreacion;
 
     public Long getIdReporte() { return idReporte; }

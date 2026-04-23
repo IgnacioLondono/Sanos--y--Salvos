@@ -1,45 +1,58 @@
 package com.sanos.iamservice.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "usuarios")
+@Schema(name = "Usuario", description = "Entidad JPA tabla **usuarios** (db_iam). PK: id_usuario.")
 public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_usuario")
+    @Schema(description = "PK id_usuario", accessMode = Schema.AccessMode.READ_ONLY, example = "1")
     private Long idUsuario;
 
     @Column(name = "rut_documento", unique = true, length = 20)
+    @Schema(description = "RUT unico", example = "12345678-9")
     private String rutDocumento;
 
     @Column(name = "nombre_completo", length = 160)
+    @Schema(description = "Nombre completo")
     private String nombreCompleto;
 
     @Column(name = "comuna", length = 120)
+    @Schema(description = "Comuna")
     private String comuna;
 
     @Column(name = "direccion", length = 200)
+    @Schema(description = "Direccion")
     private String direccion;
 
     @Column(name = "contacto_emergencia_nombre", length = 160)
+    @Schema(description = "Nombre contacto emergencia")
     private String contactoEmergenciaNombre;
 
     @Column(name = "contacto_emergencia_telefono", length = 32)
+    @Schema(description = "Telefono contacto emergencia")
     private String contactoEmergenciaTelefono;
 
     @Column(name = "rol", length = 20)
+    @Schema(description = "Rol", example = "CITIZEN")
     private String rol;
 
     @Column(name = "acepto_terminos")
+    @Schema(description = "Acepto terminos")
     private Boolean aceptoTerminos;
 
     @Column(name = "acepto_privacidad")
+    @Schema(description = "Acepto privacidad")
     private Boolean aceptoPrivacidad;
 
     @Column(name = "fecha_registro")
+    @Schema(description = "fecha_registro")
     private LocalDateTime fechaRegistro;
 
     public Long getIdUsuario() { return idUsuario; }

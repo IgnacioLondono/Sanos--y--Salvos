@@ -1,39 +1,50 @@
 package com.sanos.auditservice.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "log_auditoria")
+@Schema(name = "LogAuditoria", description = "Tabla **log_auditoria** (db_audit).")
 public class LogAuditoria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_log")
+    @Schema(description = "PK id_log", accessMode = Schema.AccessMode.READ_ONLY)
     private Long idLog;
 
     @Column(name = "id_usuario_responsable")
+    @Schema(description = "Usuario responsable opcional", example = "1")
     private Long idUsuarioResponsable;
 
     @Column(name = "entidad", length = 120)
+    @Schema(description = "Entidad dominio")
     private String entidad;
 
     @Column(name = "operacion", length = 40)
+    @Schema(description = "Operacion")
     private String operacion;
 
     @Column(name = "actor", length = 180)
+    @Schema(description = "Actor humano o sistema")
     private String actor;
 
     @Column(name = "tabla_afectada", length = 120)
+    @Schema(description = "Tabla fisica afectada (legacy)")
     private String tablaAfectada;
 
     @Column(name = "accion_realizada", length = 120)
+    @Schema(description = "Accion (legacy)")
     private String accionRealizada;
 
     @Column(name = "cambios_json", columnDefinition = "TEXT")
+    @Schema(description = "Detalle JSON")
     private String cambiosJson;
 
     @Column(name = "creado_en")
+    @Schema(description = "Timestamp")
     private LocalDateTime creadoEn;
 
     public Long getIdLog() { return idLog; }

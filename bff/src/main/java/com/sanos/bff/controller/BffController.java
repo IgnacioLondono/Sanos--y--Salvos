@@ -1,5 +1,11 @@
 package com.sanos.bff.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +17,7 @@ import java.util.function.Supplier;
 @RestController
 @RequestMapping("/api/bff")
 @CrossOrigin(origins = "*")
+@Tag(name = "BFF", description = "Agregacion para frontend: llama a IAM, pets, reports, geo, media, matching, capacity, audit. Sin tablas propias.")
 public class BffController {
 
     private final RestTemplate restTemplate;
@@ -28,6 +35,14 @@ public class BffController {
         this.restTemplate = restTemplate;
     }
 
+    @Operation(
+            summary = "Dashboard consolidado",
+            description = """
+                    Agrega listados y totales: mascotas, reportes, capacity, media, matching, zonas, auditoria, usuarios IAM.
+                    Incluye `serviceStatus` por microservicio (UP/DOWN) si alguna llamada falla.
+                    Respuesta: objeto JSON con claves totalPets, totalReports, pets, reports, … (tipo object).""")
+    @ApiResponse(responseCode = "200", description = "Mapa agregado",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @GetMapping("/dashboard")
     public Map<String, Object> dashboard() {
         Map<String, Object> serviceStatus = new LinkedHashMap<>();
@@ -61,6 +76,10 @@ public class BffController {
         return result;
     }
 
+    @Operation(
+            summary = "Datos para mapa",
+            description = "Combina `GET /api/reports` y `GET /api/zones` para capas mapa (Leaflet). Incluye `serviceStatus`.")
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @GetMapping("/map")
     public Map<String, Object> mapOverview() {
         Map<String, Object> serviceStatus = new LinkedHashMap<>();
@@ -74,8 +93,14 @@ public class BffController {
         return result;
     }
 
+    @Operation(
+            summary = "Vista mascota enriquecida",
+            description = "Unifica mascota (`/api/pets/{id}`), reportes por mascota y media por mascota.")
+    @ApiResponse(responseCode = "200", description = "pet, reports, media, serviceStatus (pet null si no existe mascota).",
+            content = @Content(mediaType = "application/json", schema = @Schema(type = "object")))
     @GetMapping("/pet-overview/{petId}")
-    public ResponseEntity<Map<String, Object>> petOverview(@PathVariable Long petId) {
+    public ResponseEntity<Map<String, Object>> petOverview(
+            @Parameter(description = "id_mascota (PK catalogo)", example = "1", required = true) @PathVariable Long petId) {
         Map<String, Object> serviceStatus = new LinkedHashMap<>();
 
         Object pet = safeObject("pet-catalog-service", serviceStatus,
@@ -93,6 +118,7 @@ public class BffController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Salud BFF")
     @GetMapping("/health")
     public Map<String, Object> health() {
         return Map.of("status", "UP", "component", "bff");

@@ -21,6 +21,10 @@ public class SecurityAndRateLimitFilter implements GlobalFilter, Ordered {
     private static final List<String> PUBLIC_PREFIXES = List.of(
             "/api/iam/login",
             "/api/iam/register",
+            "/v3/api-docs",
+            "/openapi/",
+            "/swagger-ui",
+            "/swagger-ui.html",
             "/api/iam/health",
             "/api/pets/health",
             "/api/reports/health",

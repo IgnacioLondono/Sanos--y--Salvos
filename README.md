@@ -11,6 +11,7 @@ Plataforma distribuida para registro, reporte y coincidencia de mascotas perdida
 - **Database per Service**: un unico contenedor MySQL expone 8 esquemas aislados (`db_iam`, `db_pets`, `db_reports`, `db_geo`, `db_media`, `db_matching`, `db_capacity`, `db_audit`).
 - **Seguridad**: contrasenas con BCrypt y JWT firmado (HMAC-SHA, 32+ chars) compartido entre IAM y Gateway.
 - **Data seeding** en cada microservicio: al primer arranque la web ya trae mascotas, reportes, zonas, multimedia, capacity y auditoria de ejemplo.
+- **OpenAPI / Swagger**: cada servicio expone su spec; el **gateway** agrega los 9 contratos (8 microservicios + BFF) en una sola Swagger UI con selector.
 
 ### Diagrama logico
 
@@ -42,6 +43,18 @@ Servicios principales:
 
 Los 8 esquemas se crean automaticamente a partir de `db/init.sql`. Hibernate (`ddl-auto: update`) crea y evoluciona las tablas segun las entidades JPA.
 
+## Documentacion API (Swagger / OpenAPI)
+
+**Vista unificada (recomendada):** abre el gateway y usa el desplegable superior para cambiar de API.
+
+- Swagger UI unificado: `http://localhost:8080/swagger-ui/index.html`
+- Cada opcion carga el OpenAPI 3 del microservicio correspondiente (rutas internas proxy: `/openapi/{servicio}/v3/api-docs`).
+- En la descripcion de cada API figuran el **esquema MySQL** y las **tablas** del dominio (17 tablas repartidas en 8 bases).
+- Esquema de seguridad **Bearer JWT** documentado en cada servicio; para probar endpoints protegidos: `POST /api/iam/login` y luego **Authorize** en Swagger con el token.
+- En codigo: cada **controlador** usa `@Tag`, `@Operation`, `@Parameter` y `@ApiResponse` donde aplica; **DTOs (records)** y **entidades JPA** llevan `@Schema` con descripcion de campos y mapeo a tablas SQL.
+
+**Swagger directo por puerto** (sin gateway), por ejemplo: `http://localhost:8091/swagger-ui/index.html` (IAM), `8092` (mascotas), … `8098` (auditoria), `8081` (BFF).
+
 ## Credenciales pre-cargadas
 
 - Administrador (login): `admin@sanosysalvos.cl` / `Admin#Sanos2026`
@@ -49,7 +62,7 @@ Los 8 esquemas se crean automaticamente a partir de `db/init.sql`. Hibernate (`d
 
 ## Pantallas del frontend
 
-- `index.html` - Login ciudadano (y enlace a login admin).
+- `index.html` - Login unico (mismo formulario para ciudadano y admin; el rol del JWT define el dashboard).
 - `register.html` - Registro ciudadano con RUT, comuna, contacto de emergencia, aceptacion de terminos.
 - `admin-login.html` - Login exclusivo de administrador.
 - `citizen-dashboard.html` - Mapa de reportes (clic para fijar coordenadas), alta de mascotas, reportes, multimedia, listados y coincidencias.
