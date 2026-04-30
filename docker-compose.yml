@@ -1,38 +1,14 @@
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: sanos-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: sanosysalvos
-      MYSQL_USER: sanos
-      MYSQL_PASSWORD: sanos_pwd
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-    networks:
-      - sanos-net
-
   iam-service:
     build: ./services/iam-service
     container_name: sanos-iam
     ports:
       - "8091:8091"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_iam?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_iam?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
-    depends_on:
-      mysql:
-        condition: service_healthy
     networks:
       - sanos-net
 
@@ -42,12 +18,9 @@ services:
     ports:
       - "8092:8092"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_pets?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
-    depends_on:
-      mysql:
-        condition: service_healthy
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_pets?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     networks:
       - sanos-net
 
@@ -57,12 +30,9 @@ services:
     ports:
       - "8093:8093"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_reports?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
-    depends_on:
-      mysql:
-        condition: service_healthy
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_reports?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     networks:
       - sanos-net
 
@@ -72,12 +42,9 @@ services:
     ports:
       - "8094:8094"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
-    depends_on:
-      mysql:
-        condition: service_healthy
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     networks:
       - sanos-net
 
@@ -87,12 +54,9 @@ services:
     ports:
       - "8095:8095"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_media?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
-    depends_on:
-      mysql:
-        condition: service_healthy
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_media?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     networks:
       - sanos-net
 
@@ -102,14 +66,11 @@ services:
     ports:
       - "8096:8096"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_matching?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_matching?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
       REPORTS_SERVICE_URL: http://reports-service:8093
-    depends_on:
-      mysql:
-        condition: service_healthy
     networks:
       - sanos-net
 
@@ -119,12 +80,9 @@ services:
     ports:
       - "8097:8097"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_capacity?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
-    depends_on:
-      mysql:
-        condition: service_healthy
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_capacity?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     networks:
       - sanos-net
 
@@ -134,12 +92,9 @@ services:
     ports:
       - "8098:8098"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_audit?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
-    depends_on:
-      mysql:
-        condition: service_healthy
+      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_audit?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     networks:
       - sanos-net
 
@@ -208,9 +163,6 @@ services:
       - gateway
     networks:
       - sanos-net
-
-volumes:
-  mysql_data:
 
 networks:
   sanos-net:
