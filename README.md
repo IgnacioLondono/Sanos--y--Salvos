@@ -7,41 +7,36 @@ Plataforma distribuida para registro, reporte y coincidencia de mascotas perdida
 - **8 microservicios Spring Boot** (IAM, Catalogo de mascotas, Reportes, Geo-inteligencia, Media, Matching IA, Capacity, Auditoria) con JPA + MySQL.
 - **API Gateway** con validacion de JWT, CORS y rate limiting basico.
 - **BFF (Backend for Frontend)** para agregacion resiliente (dashboard, mapa, detalle de mascota).
-- **Frontend web** (HTML + JS vanilla) con pantallas por rol y mapa Leaflet/OpenStreetMap.
-- **Database per Service**: un unico contenedor MySQL expone 8 esquemas aislados (`db_iam`, `db_pets`, `db_reports`, `db_geo`, `db_media`, `db_matching`, `db_capacity`, `db_audit`).
+- **Database per Service**: 8 esquemas aislados (`db_iam`, `db_pets`, `db_reports`, `db_geo`, `db_media`, `db_matching`, `db_capacity`, `db_audit`) en tu instancia MySQL.
 - **Seguridad**: contrasenas con BCrypt y JWT firmado (HMAC-SHA, 32+ chars) compartido entre IAM y Gateway.
-- **Data seeding** en cada microservicio: al primer arranque la web ya trae mascotas, reportes, zonas, multimedia, capacity y auditoria de ejemplo.
+- **Data seeding** en cada microservicio: al primer arranque los datos de ejemplo se cargan si las tablas existen.
 - **OpenAPI / Swagger**: cada servicio expone su spec; el **gateway** agrega los 9 contratos (8 microservicios + BFF) en una sola Swagger UI con selector.
 
 ### Diagrama logico
 
 ```
-[Frontend] -> [Gateway :8080] -> [BFF :8081]
-                              -> [IAM :8091]          -> (db_iam)
-                              -> [Pet Catalog :8092]  -> (db_pets)
-                              -> [Reports :8093]      -> (db_reports)
-                              -> [Geo :8094]          -> (db_geo)
-                              -> [Media :8095]        -> (db_media)
-                              -> [Matching :8096]     -> (db_matching)
-                              -> [Capacity :8097]     -> (db_capacity)
-                              -> [Audit :8098]        -> (db_audit)
+[Cliente / Swagger] -> [Gateway :8080] -> [BFF :8081]
+                                    -> [IAM :8091]          -> (db_iam)
+                                    -> [Pet Catalog :8092]  -> (db_pets)
+                                    -> [Reports :8093]      -> (db_reports)
+                                    -> [Geo :8094]          -> (db_geo)
+                                    -> [Media :8095]        -> (db_media)
+                                    -> [Matching :8096]     -> (db_matching)
+                                    -> [Capacity :8097]     -> (db_capacity)
+                                    -> [Audit :8098]        -> (db_audit)
 ```
 
-## Ejecutar con Docker
+## Ejecutar con Docker Compose
 
-Requisitos: Docker Desktop con Docker Compose v2.
+MySQL debe estar **fuera** de este compose (local, XAMPP, nube, etc.). Por defecto los contenedores usan `host.docker.internal:3306` y usuario `sanos` / `sanos_pwd` (configurable con `.env` desde `.env.example`).
 
 ```bash
 docker compose up --build
 ```
 
-Servicios principales:
-- Frontend: http://localhost:5173
-- API Gateway: http://localhost:8080
-- BFF: http://localhost:8081
-- MySQL: localhost:3306 (usuario `sanos`, password `sanos_pwd`)
-
-Los 8 esquemas se crean automaticamente a partir de `db/init.sql`. Hibernate (`ddl-auto: update`) crea y evoluciona las tablas segun las entidades JPA.
+- Gateway: `http://localhost:8080`
+- BFF: `http://localhost:8081`
+- Swagger unificado: `http://localhost:8080/swagger-ui/index.html`
 
 ## Documentacion API (Swagger / OpenAPI)
 
@@ -58,21 +53,11 @@ Los 8 esquemas se crean automaticamente a partir de `db/init.sql`. Hibernate (`d
 ## Credenciales pre-cargadas
 
 - Administrador (login): `admin@sanosysalvos.cl` / `Admin#Sanos2026`
-- Ciudadano de prueba: `ciudadano@sanosysalvos.cl` / `Ciudadano#2026`
-
-## Pantallas del frontend
-
-- `index.html` - Login unico (mismo formulario para ciudadano y admin; el rol del JWT define el dashboard).
-- `register.html` - Registro ciudadano con RUT, comuna, contacto de emergencia, aceptacion de terminos.
-- `admin-login.html` - Login exclusivo de administrador.
-- `citizen-dashboard.html` - Mapa de reportes (clic para fijar coordenadas), alta de mascotas, reportes, multimedia, listados y coincidencias.
-- `admin-dashboard.html` - Salud de microservicios, KPIs, usuarios IAM, reportes, capacity, mapa de zonas de riesgo (Leaflet), matching y auditoria.
-
-Ambos dashboards integran Leaflet + OpenStreetMap sin requerir API key.
+- Ciudadano de prueba: `demo@sanosysalvos.cl` / `Demo#Sanos2026`
 
 ## Flujo de uso
 
-1. Registrar un ciudadano: `POST /api/iam/register` (o desde `register.html`).
+1. Registrar un ciudadano: `POST /api/iam/register`.
 2. Autenticarse: `POST /api/iam/login` devuelve `{ token, id, email, displayName, role }`.
 3. Enviar JWT en `Authorization: Bearer <token>` a todos los endpoints excepto los `/health` y login/register.
 4. Consumir el dashboard agregado: `GET /api/bff/dashboard`.
@@ -91,7 +76,7 @@ Ambos dashboards integran Leaflet + OpenStreetMap sin requerir API key.
 - Auditoria: `GET /api/audit`, `GET /api/audit/entity/{entity}`, `GET /api/audit/actor/{actor}`.
 - BFF: `GET /api/bff/dashboard`, `GET /api/bff/map`, `GET /api/bff/pet-overview/{petId}`, `GET /api/bff/health`.
 
-Todos los servicios exponen `/api/<dominio>/health` como endpoint publico para el panel de estado del admin.
+Todos los servicios exponen `/api/<dominio>/health` como endpoint publico para healthchecks.
 
 ## Modelo de datos (17 tablas, 8 dominios en 3FN)
 
@@ -106,13 +91,12 @@ Todos los servicios exponen `/api/<dominio>/health` como endpoint publico para e
 
 ## Desarrollo local (sin Docker)
 
-1. Levantar MySQL 8 y aplicar `db/init.sql`.
+1. Levantar MySQL 8 y crear los esquemas `db_iam`, `db_pets`, … `db_audit` (y usuario/contrasena alineados a `application.yml` o variables de entorno).
 2. Compilar y ejecutar cada microservicio con `mvn spring-boot:run` usando los puertos 8091-8098 y el BFF en 8081.
 3. Ejecutar el gateway en 8080 con `SANOS_JWT_SECRET` alineado al del IAM.
-4. Servir `frontend/` con cualquier servidor estatico (por ejemplo `npx http-server frontend -p 5173`).
 
 ## Troubleshooting
 
-- Si el mapa no carga: verificar que el navegador puede acceder a `unpkg.com` (CDN de Leaflet) y `tile.openstreetmap.org`.
-- Si `/api/bff/dashboard` responde con `serviceStatus` en DOWN para algun microservicio, el BFF seguira respondiendo el resto y el frontend mostrara los datos parciales sin romperse.
-- Tokens: para regenerar credenciales cambia `SANOS_JWT_SECRET` en `docker-compose.yml` (sin olvidar replicarlo en IAM y Gateway).
+- Si `/api/bff/dashboard` responde con `serviceStatus` en DOWN para algun microservicio, el BFF sigue respondiendo el resto de datos agregados.
+- Tokens: para regenerar credenciales cambia `SANOS_JWT_SECRET` de forma consistente entre IAM y Gateway.
+- Docker: si los contenedores no llegan a MySQL en Windows, revisa firewall y que MySQL acepte conexiones desde Docker (`host.docker.internal`).

@@ -1,3 +1,10 @@
+# Microservicios + BFF + Gateway (sin MySQL ni frontend en este compose).
+# MySQL debe estar accesible desde los contenedores (por defecto host.docker.internal:3306).
+#
+# Opcional: copia .env.example a .env y ajusta MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD.
+#
+#   docker compose up --build
+
 services:
   iam-service:
     build: ./services/iam-service
@@ -5,10 +12,12 @@ services:
     ports:
       - "8091:8091"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_iam?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-host.docker.internal}:3306/db_iam?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-sanos}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-sanos_pwd}
+      SANOS_JWT_SECRET: ${SANOS_JWT_SECRET:-sanos-y-salvos-super-secret-key-at-least-32-chars}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sanos-net
 
@@ -18,9 +27,11 @@ services:
     ports:
       - "8092:8092"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_pets?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-host.docker.internal}:3306/db_pets?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-sanos}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-sanos_pwd}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sanos-net
 
@@ -30,9 +41,11 @@ services:
     ports:
       - "8093:8093"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_reports?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-host.docker.internal}:3306/db_reports?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-sanos}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-sanos_pwd}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sanos-net
 
@@ -42,9 +55,11 @@ services:
     ports:
       - "8094:8094"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-host.docker.internal}:3306/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-sanos}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-sanos_pwd}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sanos-net
 
@@ -54,9 +69,11 @@ services:
     ports:
       - "8095:8095"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_media?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-host.docker.internal}:3306/db_media?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-sanos}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-sanos_pwd}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sanos-net
 
@@ -66,11 +83,16 @@ services:
     ports:
       - "8096:8096"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_matching?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-host.docker.internal}:3306/db_matching?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-sanos}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-sanos_pwd}
       PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
       REPORTS_SERVICE_URL: http://reports-service:8093
+    depends_on:
+      - pet-catalog-service
+      - reports-service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sanos-net
 
@@ -80,9 +102,11 @@ services:
     ports:
       - "8097:8097"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_capacity?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-host.docker.internal}:3306/db_capacity?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-sanos}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-sanos_pwd}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sanos-net
 
@@ -92,9 +116,11 @@ services:
     ports:
       - "8098:8098"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://${DB_HOST}:${DB_PORT}/db_audit?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-host.docker.internal}:3306/db_audit?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-sanos}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-sanos_pwd}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - sanos-net
 
@@ -113,22 +139,14 @@ services:
       CAPACITY_SERVICE_URL: http://capacity-service:8097
       AUDIT_SERVICE_URL: http://audit-service:8098
     depends_on:
-      iam-service:
-        condition: service_started
-      pet-catalog-service:
-        condition: service_started
-      reports-service:
-        condition: service_started
-      geo-intelligence-service:
-        condition: service_started
-      media-service:
-        condition: service_started
-      matching-service:
-        condition: service_started
-      capacity-service:
-        condition: service_started
-      audit-service:
-        condition: service_started
+      - iam-service
+      - pet-catalog-service
+      - reports-service
+      - geo-intelligence-service
+      - media-service
+      - matching-service
+      - capacity-service
+      - audit-service
     networks:
       - sanos-net
 
@@ -147,20 +165,9 @@ services:
       CAPACITY_SERVICE_URL: http://capacity-service:8097
       AUDIT_SERVICE_URL: http://audit-service:8098
       BFF_SERVICE_URL: http://bff:8081
-      SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
+      SANOS_JWT_SECRET: ${SANOS_JWT_SECRET:-sanos-y-salvos-super-secret-key-at-least-32-chars}
     depends_on:
-      bff:
-        condition: service_started
-    networks:
-      - sanos-net
-
-  frontend:
-    build: ./frontend
-    container_name: sanos-frontend
-    ports:
-      - "5173:80"
-    depends_on:
-      - gateway
+      - bff
     networks:
       - sanos-net
 

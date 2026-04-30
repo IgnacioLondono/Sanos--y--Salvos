@@ -1,11 +1,13 @@
-﻿FROM maven:3.9.9-eclipse-temurin-17 AS build
+FROM maven:3.9.9-eclipse-temurin-17-alpine AS builder
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
-RUN mvn -q clean package -DskipTests
+RUN mvn -q -B -DskipTests package
 
-FROM eclipse-temurin:17-jre
-WORKDIR /opt/app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+RUN apk add --no-cache wget
+COPY --from=builder /app/target/*-SNAPSHOT.jar /app/app.jar
+ENV JAVA_OPTS=""
+EXPOSE 8093
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
