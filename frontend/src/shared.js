@@ -16,6 +16,10 @@
     return String(value || "").trim().replace(/\/$/, "");
   }
 
+  function isLocalhostHost(hostname) {
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  }
+
   function loadSettings() {
     const fallback = {
       apiBaseUrl: defaults.apiBaseUrl || inferApiBaseUrl(),
@@ -30,8 +34,25 @@
 
     try {
       const data = JSON.parse(raw);
+      const candidateBaseUrl = sanitizeBaseUrl(data.apiBaseUrl);
+      const inferredBaseUrl = inferApiBaseUrl();
+      let apiBaseUrl = candidateBaseUrl || fallback.apiBaseUrl;
+
+      // If an old session stored localhost but the app now runs on a remote host,
+      // switch automatically to the inferred host to avoid connection failures.
+      if (candidateBaseUrl) {
+        try {
+          const parsed = new URL(candidateBaseUrl);
+          if (isLocalhostHost(parsed.hostname) && !isLocalhostHost(window.location.hostname)) {
+            apiBaseUrl = inferredBaseUrl;
+          }
+        } catch (error) {
+          apiBaseUrl = fallback.apiBaseUrl;
+        }
+      }
+
       return {
-        apiBaseUrl: sanitizeBaseUrl(data.apiBaseUrl) || fallback.apiBaseUrl,
+        apiBaseUrl,
         mapsApiKey: data.mapsApiKey || fallback.mapsApiKey,
         defaultCenter: data.defaultCenter || fallback.defaultCenter
       };

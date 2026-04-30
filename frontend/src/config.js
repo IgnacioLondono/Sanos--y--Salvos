@@ -1,5 +1,5 @@
 window.SANOS_CONFIG = {
-  apiBaseUrl: "http://localhost:8080",
+  apiBaseUrl: "",
   googleMapsApiKey: "",
   defaultCenter: {
     lat: -33.4489,
