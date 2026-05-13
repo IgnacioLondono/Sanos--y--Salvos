@@ -1,0 +1,18 @@
+# Java
+**/target/
+**/.mvn/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node/frontend
+**/node_modules/
+
+# Logs
+*.log

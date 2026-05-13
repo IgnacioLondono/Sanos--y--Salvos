@@ -1,0 +1,22 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: bff
+
+services:
+  iamUrl: ${IAM_SERVICE_URL:http://localhost:8091}
+  petCatalogUrl: ${PET_CATALOG_SERVICE_URL:http://localhost:8092}
+  mediaUrl: ${MEDIA_SERVICE_URL:http://localhost:8095}
+  reportsUrl: ${REPORTS_SERVICE_URL:http://localhost:8093}
+  capacityUrl: ${CAPACITY_SERVICE_URL:http://localhost:8097}
+  matchingUrl: ${MATCHING_SERVICE_URL:http://localhost:8096}
+  zonesUrl: ${GEO_SERVICE_URL:http://localhost:8094}
+  auditUrl: ${AUDIT_SERVICE_URL:http://localhost:8098}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sanos y Salvos | Crear cuenta</title>
+  <meta name="description" content="Registro en Sanos y Salvos." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body class="auth-page">
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <div class="auth-viewport auth-viewport-register">
+    <section class="auth-card auth-card-register reveal">
+      <div class="auth-header auth-header-register">
+        <img class="brand-logo" src="./src/logo.svg" alt="Sanos y Salvos" />
+        <h1 class="auth-title">Crear cuenta</h1>
+      </div>
+
+      <form class="register-form" id="registerForm" novalidate>
+        <fieldset class="register-block">
+          <legend>Identidad</legend>
+          <div class="form-grid two-cols form-grid-compact">
+            <label class="field">
+              <span>Nombre completo</span>
+              <input id="fullName" type="text" placeholder="Nombre y apellido" autocomplete="name" />
+            </label>
+            <label class="field">
+              <span>RUT</span>
+              <input id="rutDocument" type="text" placeholder="12345678-9" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>Correo</span>
+              <input id="email" type="email" placeholder="tu-correo@dominio.cl" autocomplete="email" />
+            </label>
+            <label class="field">
+              <span>Contrasena</span>
+              <input id="password" type="password" placeholder="Min. 10 caracteres" autocomplete="new-password" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="register-block">
+          <legend>Ubicacion</legend>
+          <div class="form-grid two-cols form-grid-compact">
+            <label class="field">
+              <span>Comuna</span>
+              <input id="commune" type="text" placeholder="Providencia" autocomplete="address-level2" />
+            </label>
+            <label class="field">
+              <span>Telefono</span>
+              <input id="phone" type="text" placeholder="+56 9 1234 5678" autocomplete="tel" />
+            </label>
+            <label class="field field-span-2">
+              <span>Direccion</span>
+              <input id="address" type="text" placeholder="Calle y numero" autocomplete="street-address" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="register-block">
+          <legend>Emergencia</legend>
+          <div class="form-grid two-cols form-grid-compact">
+            <label class="field">
+              <span>Contacto</span>
+              <input id="emergencyContactName" type="text" placeholder="Nombre del contacto" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>Telefono</span>
+              <input id="emergencyContactPhone" type="text" placeholder="+56 9 9876 5432" autocomplete="tel" />
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="checks-grid checks-grid-compact">
+          <label class="check-line">
+            <input id="acceptTerms" type="checkbox" />
+            <span>Acepto los terminos de uso.</span>
+          </label>
+          <label class="check-line">
+            <input id="acceptPrivacy" type="checkbox" />
+            <span>Acepto la politica de privacidad.</span>
+          </label>
+        </div>
+
+        <div class="action-row auth-actions">
+          <button id="btnRegister" class="btn btn-primary" type="button">Registrar</button>
+        </div>
+      </form>
+
+      <p id="registerStatus" class="inline-feedback">Revisa los datos antes de enviar.</p>
+
+      <div class="auth-links auth-links-center">
+        <a href="./index.html">Volver al login</a>
+      </div>
+    </section>
+  </div>
+
+  <script src="./src/config.js"></script>
+  <script src="./src/shared.js"></script>
+  <script src="./src/register-auth.js"></script>
+</body>
+</html>

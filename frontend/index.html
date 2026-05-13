@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sanos y Salvos | Login</title>
+  <meta name="description" content="Inicio de sesion en Sanos y Salvos." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body class="auth-page">
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <div class="auth-viewport auth-viewport-compact">
+    <section class="auth-card auth-card-compact reveal">
+      <div class="auth-header">
+        <img class="brand-logo" src="./src/logo.svg" alt="Sanos y Salvos" />
+        <h1 class="auth-title">Iniciar sesion</h1>
+      </div>
+
+      <div class="form-grid one-col form-grid-compact">
+        <label class="field">
+          <span>Correo</span>
+          <input id="email" type="email" placeholder="tu-correo@dominio.cl" autocomplete="email" />
+        </label>
+        <label class="field">
+          <span>Contrasena</span>
+          <input id="password" type="password" placeholder="Tu contrasena" autocomplete="current-password" />
+        </label>
+      </div>
+
+      <div class="action-row auth-actions">
+        <button id="btnLogin" class="btn btn-primary" type="button">Entrar</button>
+      </div>
+
+      <p id="authStatus" class="inline-feedback">Ingresa correo y contrasena.</p>
+
+      <div class="auth-links auth-links-center">
+        <a href="./register.html">Crear cuenta</a>
+      </div>
+    </section>
+  </div>
+
+  <script src="./src/config.js"></script>
+  <script src="./src/shared.js"></script>
+  <script src="./src/index-auth.js"></script>
+</body>
+</html>
