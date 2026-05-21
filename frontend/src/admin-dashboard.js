@@ -1,5 +1,6 @@
 (function () {
   const core = window.SANOS_CORE;
+  const PAGE = (document.body && document.body.dataset.adminPage) || "resumen";
 
   const state = {
     session: core.readSession("admin"),
@@ -45,13 +46,61 @@
       return;
     }
 
-    els.adminIdentity.textContent = `${state.session.user.displayName || state.session.user.email} (ADMIN)`;
+    if (window.SANOS_DASH_LAYOUT && typeof window.SANOS_DASH_LAYOUT.applyLayout === "function") {
+      window.SANOS_DASH_LAYOUT.applyLayout();
+    }
 
-    els.btnAdminRefresh.addEventListener("click", refreshAll);
-    els.btnAdminLogout.addEventListener("click", onLogout);
+    wireAdminActions();
+    syncAdminIdentity();
+    wireAdminNav();
+    refreshForPage();
+  }
 
-    initMap();
-    refreshAll();
+  function wireAdminActions() {
+    document.addEventListener("click", (event) => {
+      if (event.target.closest("#btnAdminLogout")) {
+        event.preventDefault();
+        onLogout();
+        return;
+      }
+      if (event.target.closest("#btnAdminRefresh")) {
+        event.preventDefault();
+        refreshForPage();
+      }
+    });
+  }
+
+  function syncAdminIdentity() {
+    const name = state.session.user.displayName || state.session.user.email;
+    const node = document.getElementById("adminIdentity");
+    if (node) node.textContent = name;
+  }
+
+  function wireAdminNav() {
+    const cur = (window.location.pathname.split("/").pop() || "").toLowerCase();
+    const alias =
+      cur === "admin-matching.html" ? "admin-operaciones.html" : cur;
+    document.querySelectorAll(".dash-nav__link[href], .dash-sidebar__link[href]").forEach((a) => {
+      const href = (a.getAttribute("href") || "").toLowerCase();
+      const match =
+        href === alias ||
+        (alias === "admin-dashboard.html" && href === "admin-resumen.html");
+      a.classList.toggle("is-active", match);
+      if (match) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+  }
+
+  function refreshForPage() {
+    if (PAGE === "resumen") return refreshResumen();
+    if (PAGE === "mapa") {
+      initMap();
+      return refreshMapa();
+    }
+    if (PAGE === "usuarios") return refreshUsuarios();
+    if (PAGE === "reportes") return refreshReportes();
+    if (PAGE === "operaciones" || PAGE === "capacity" || PAGE === "matching") return refreshOperaciones();
+    if (PAGE === "auditoria") return refreshAuditoria();
   }
 
   function initMap() {
@@ -129,9 +178,9 @@
     }
   }
 
-  async function refreshAll() {
+  async function refreshResumen() {
     try {
-      setStatus("Sincronizando panel admin...");
+      setStatus("Sincronizando…", false, true);
 
       const [dashboard, users, reports, capacity, zones, matching, audit, serviceHealth] = await Promise.all([
         core.api("/api/bff/dashboard", { token: state.session.token }),
@@ -153,132 +202,222 @@
       state.audit = audit;
       state.serviceHealth = serviceHealth;
 
-      renderKpis();
-      renderServiceHealth();
-      renderTables();
+      if (els.adminKpis) renderKpis();
+      if (els.serviceHealthGrid) renderServiceHealth();
+      if (els.auditTable) {
+        els.auditTable.innerHTML = buildTable(
+          ["ID", "Entidad", "Operacion", "Actor", "Fecha"],
+          state.audit.slice(0, 15).map((a) => [
+            a.id || "-",
+            a.entity || "-",
+            a.operation || "-",
+            a.actor || "-",
+            core.formatDate(a.createdAt)
+          ])
+        );
+      }
+      setStatus("Listo");
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  async function refreshMapa() {
+    try {
+      setStatus("Sincronizando…", false, true);
+      const [zones, reports] = await Promise.all([
+        core.api("/api/zones", { token: state.session.token }),
+        core.api("/api/reports", { token: state.session.token })
+      ]);
+      state.zones = zones;
+      state.reports = reports;
+      if (els.zonesTable) {
+        els.zonesTable.innerHTML = buildTable(
+          ["ID", "Comuna", "Riesgo", "Latitud", "Longitud", "Reporte"],
+          state.zones.slice(0, 20).map((z) => [
+            z.id || "-",
+            z.commune || "-",
+            z.riskLevel || "-",
+            String(z.latitude || "-"),
+            String(z.longitude || "-"),
+            z.reportId || "-"
+          ])
+        );
+      }
       renderMap();
-      setStatus("Panel admin actualizado.");
+      setStatus("Listo");
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  async function refreshUsuarios() {
+    try {
+      setStatus("Sincronizando…", false, true);
+      state.users = await core.api("/api/iam/users", { token: state.session.token });
+      if (els.usersTable) {
+        els.usersTable.innerHTML = buildTable(
+          ["ID", "Email", "Nombre", "Rol", "Creado"],
+          state.users.map((u) => [
+            u.id || "-",
+            u.email || "-",
+            u.displayName || "-",
+            u.role || "-",
+            core.formatDate(u.createdAt)
+          ])
+        );
+      }
+      setStatus("Listo");
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  async function refreshReportes() {
+    try {
+      setStatus("Sincronizando…", false, true);
+      state.reports = await core.api("/api/reports", { token: state.session.token });
+      if (els.reportsTable) {
+        els.reportsTable.innerHTML = buildTable(
+          ["ID", "Tipo", "Estado", "Comuna", "Salud", "Creado"],
+          state.reports.slice(0, 20).map((r) => [
+            r.id || "-",
+            r.type || "-",
+            r.status || "-",
+            r.commune || "-",
+            r.healthStatus || "-",
+            core.formatDate(r.createdAt)
+          ])
+        );
+      }
+      setStatus("Listo");
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  async function refreshCapacity() {
+    try {
+      setStatus("Sincronizando…", false, true);
+      state.capacity = await core.api("/api/capacity", { token: state.session.token });
+      if (els.capacityTable) {
+        els.capacityTable.innerHTML = buildTable(
+          ["ID", "Organizacion", "Voluntarios", "Horas", "Zona", "Desde"],
+          state.capacity.slice(0, 20).map((c) => [
+            c.id || "-",
+            c.organization || "-",
+            String(c.volunteers || 0),
+            String(c.hoursAvailable || 0),
+            c.zone || "-",
+            core.formatDate(c.availableFrom || c.createdAt)
+          ])
+        );
+      }
+      setStatus("Listo");
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  async function refreshOperaciones() {
+    await Promise.all([refreshCapacity(), refreshMatching()]);
+  }
+
+  async function refreshMatching() {
+    try {
+      setStatus("Sincronizando…", false, true);
+      state.matching = await core.api("/api/matching", { token: state.session.token });
+      if (els.matchingTable) {
+        els.matchingTable.innerHTML = buildTable(
+          ["ID", "Reporte perdido", "Reporte encontrado", "Score", "Detalle"],
+          state.matching.slice(0, 20).map((m) => [
+            m.id || "-",
+            m.lostReportId || "-",
+            m.foundReportId || "-",
+            String(m.score || "0"),
+            m.explanation || "-"
+          ])
+        );
+      }
+      setStatus("Listo");
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  async function refreshAuditoria() {
+    try {
+      setStatus("Sincronizando…", false, true);
+      state.audit = await core.api("/api/audit", { token: state.session.token });
+      if (els.auditTable) {
+        els.auditTable.innerHTML = buildTable(
+          ["ID", "Entidad", "Operacion", "Actor", "Fecha"],
+          state.audit.slice(0, 20).map((a) => [
+            a.id || "-",
+            a.entity || "-",
+            a.operation || "-",
+            a.actor || "-",
+            core.formatDate(a.createdAt)
+          ])
+        );
+      }
+      setStatus("Listo");
     } catch (error) {
       setStatus(error.message, true);
     }
   }
 
   function renderKpis() {
+    if (!els.adminKpis) return;
     const d = state.dashboard || {};
     const cards = [
-      ["Usuarios IAM", state.users.length, "Identidades registradas"],
-      ["Mascotas", d.totalPets || 0, "Catalogo total"],
-      ["Reportes", d.totalReports || 0, "Eventos activos"],
-      ["Capacity", d.totalCapacityRecords || 0, "Recursos declarados"],
-      ["Matching", state.matching.length || 0, "Resultados de IA"],
-      ["Zonas", state.zones.length || 0, "Incidencia geografica"],
-      ["Auditoria", state.audit.length || 0, "Trazas de cambios"],
-      ["Servicios UP", countServicesUp(), "Disponibilidad del sistema"]
+      { label: "Usuarios", value: state.users.length, icon: "users", tint: "kpi-ico-indigo" },
+      { label: "Mascotas", value: d.totalPets || 0, icon: "paw-print", tint: "kpi-ico-mint" },
+      { label: "Reportes", value: d.totalReports || 0, icon: "file-text", tint: "kpi-ico-gold" },
+      { label: "Capacity", value: d.totalCapacityRecords || 0, icon: "users-round", tint: "kpi-ico-sky" },
+      { label: "Matching", value: state.matching.length || 0, icon: "sparkles", tint: "kpi-ico-violet" },
+      { label: "Zonas", value: state.zones.length || 0, icon: "map-pin", tint: "kpi-ico-rose" },
+      { label: "Auditoria", value: state.audit.length || 0, icon: "history", tint: "kpi-ico-indigo" },
+      { label: "Servicios OK", value: countServicesUp(), icon: "server", tint: "kpi-ico-mint" }
     ];
 
     els.adminKpis.innerHTML = cards
       .map(
-        (card) => `
-          <article class="kpi-card">
-            <span>${core.escapeHtml(card[0])}</span>
-            <strong>${core.escapeHtml(String(card[1]))}</strong>
-            <p class="activity-meta">${core.escapeHtml(card[2])}</p>
+        (c) => `
+          <article class="kpi-card kpi-card--modern">
+            <div class="kpi-card__row">
+              <div class="kpi-card__ico ${c.tint}"><i data-lucide="${c.icon}"></i></div>
+              <div>
+                <span class="kpi-label">${core.escapeHtml(c.label)}</span>
+                <strong>${core.escapeHtml(String(c.value))}</strong>
+              </div>
+            </div>
           </article>
         `
       )
       .join("");
+    core.refreshIcons();
   }
 
   function renderServiceHealth() {
+    if (!els.serviceHealthGrid) return;
     if (!state.serviceHealth.length) {
-      els.serviceHealthGrid.innerHTML = '<article class="service-health-card"><strong>Sin datos</strong><p>No se pudo consultar salud de microservicios.</p></article>';
+      els.serviceHealthGrid.innerHTML = `<span class="health-chip health-chip--down"><i data-lucide="wifi-off"></i>${core.escapeHtml("Sin datos")}</span>`;
+      core.refreshIcons();
       return;
     }
 
     els.serviceHealthGrid.innerHTML = state.serviceHealth
       .map(
         (service) => `
-          <article class="service-health-card">
-            <div class="service-health-top">
-              <strong>${core.escapeHtml(service.name)}</strong>
-              <span class="health-dot ${service.up ? "health-up" : "health-down"}">${service.up ? "UP" : "DOWN"}</span>
-            </div>
-            <p>${core.escapeHtml(service.detail)}</p>
-          </article>
+          <span class="health-chip ${service.up ? "health-chip--up" : "health-chip--down"}" title="${core.escapeHtml(service.detail)}">
+            <i data-lucide="${service.up ? "check-circle" : "x-circle"}"></i>
+            ${core.escapeHtml(service.name)}
+          </span>
         `
       )
       .join("");
-  }
-
-  function renderTables() {
-    els.usersTable.innerHTML = buildTable(
-      ["ID", "Email", "Nombre", "Rol", "Creado"],
-      state.users.map((u) => [
-        u.id || "-",
-        u.email || "-",
-        u.displayName || "-",
-        u.role || "-",
-        core.formatDate(u.createdAt)
-      ])
-    );
-
-    els.reportsTable.innerHTML = buildTable(
-      ["ID", "Tipo", "Estado", "Comuna", "Salud", "Creado"],
-      state.reports.slice(0, 20).map((r) => [
-        r.id || "-",
-        r.type || "-",
-        r.status || "-",
-        r.commune || "-",
-        r.healthStatus || "-",
-        core.formatDate(r.createdAt)
-      ])
-    );
-
-    els.capacityTable.innerHTML = buildTable(
-      ["ID", "Organizacion", "Voluntarios", "Horas", "Zona", "Desde"],
-      state.capacity.slice(0, 20).map((c) => [
-        c.id || "-",
-        c.organization || "-",
-        String(c.volunteers || 0),
-        String(c.hoursAvailable || 0),
-        c.zone || "-",
-        core.formatDate(c.availableFrom || c.createdAt)
-      ])
-    );
-
-    els.zonesTable.innerHTML = buildTable(
-      ["ID", "Comuna", "Riesgo", "Latitud", "Longitud", "Reporte"],
-      state.zones.slice(0, 20).map((z) => [
-        z.id || "-",
-        z.commune || "-",
-        z.riskLevel || "-",
-        String(z.latitude || "-"),
-        String(z.longitude || "-"),
-        z.reportId || "-"
-      ])
-    );
-
-    els.matchingTable.innerHTML = buildTable(
-      ["ID", "Reporte perdido", "Reporte encontrado", "Score", "Detalle"],
-      state.matching.slice(0, 20).map((m) => [
-        m.id || "-",
-        m.lostReportId || "-",
-        m.foundReportId || "-",
-        String(m.score || "0"),
-        m.explanation || "-"
-      ])
-    );
-
-    els.auditTable.innerHTML = buildTable(
-      ["ID", "Entidad", "Operacion", "Actor", "Fecha"],
-      state.audit.slice(0, 20).map((a) => [
-        a.id || "-",
-        a.entity || "-",
-        a.operation || "-",
-        a.actor || "-",
-        core.formatDate(a.createdAt)
-      ])
-    );
+    core.refreshIcons();
   }
 
   function buildTable(headers, rows) {
@@ -302,7 +441,7 @@
 
   function onLogout() {
     core.clearSession("admin");
-    window.location.href = "./index.html";
+    window.location.href = "./index.html?logout=1";
   }
 
   async function fetchServiceHealth() {
@@ -352,8 +491,19 @@
     return state.serviceHealth.filter((service) => service.up).length;
   }
 
-  function setStatus(message, isError) {
-    els.adminStatus.textContent = message;
-    els.adminStatus.style.color = isError ? "#b74f4f" : "";
+  function statusNode() {
+    return document.querySelector(".dash-topbar #adminStatus") || document.getElementById("adminStatus");
+  }
+
+  function setStatus(message, isError, loading) {
+    const node = statusNode();
+    if (!node) return;
+    const esc = core.escapeHtml(message);
+    const left = loading
+      ? `<span class="lucide-spin"><i data-lucide="loader"></i></span>`
+      : `<i data-lucide="${isError ? "alert-circle" : "check"}"></i>`;
+    node.className = `sync-pill${isError ? " is-error" : ""}`;
+    node.innerHTML = `${left}<span>${esc}</span>`;
+    core.refreshIcons();
   }
 })();

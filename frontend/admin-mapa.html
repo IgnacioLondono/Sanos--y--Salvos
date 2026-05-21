@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa | Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles.css" />
+  <link rel="stylesheet" href="./src/styles-enhanced.css" />
+  <link rel="stylesheet" href="./src/dash-sidebar.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("sanos-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+</head>
+<body class="dash-page admin-page" data-admin-page="mapa">
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="ambient ambient-c"></div>
+
+  <div class="dash-root">
+    <header class="dash-header">
+      <div class="dash-header-inner">
+        <a class="dash-brand" href="./index.html">
+          <img class="dash-brand__logo" src="./src/logo.svg" alt="" width="46" height="46" />
+          <div class="dash-brand__text">
+            <span class="dash-brand__kicker">Sanos y salvos</span>
+            <strong class="dash-brand__title">Admin</strong>
+          </div>
+        </a>
+        <nav class="dash-nav" aria-label="Admin">
+          <a class="sidebar-link dash-nav__link" href="admin-resumen.html"><i data-lucide="activity" class="sidebar-link-icon" aria-hidden="true"></i>Resumen</a>
+          <a class="sidebar-link dash-nav__link" href="admin-usuarios.html"><i data-lucide="users" class="sidebar-link-icon" aria-hidden="true"></i>Usuarios</a>
+          <a class="sidebar-link dash-nav__link" href="admin-reportes.html"><i data-lucide="file-text" class="sidebar-link-icon" aria-hidden="true"></i>Reportes</a>
+          <a class="sidebar-link dash-nav__link" href="admin-capacity.html"><i data-lucide="users-round" class="sidebar-link-icon" aria-hidden="true"></i>Capacity</a>
+          <a class="sidebar-link dash-nav__link" href="admin-mapa.html"><i data-lucide="map" class="sidebar-link-icon" aria-hidden="true"></i>Mapa</a>
+          <a class="sidebar-link dash-nav__link" href="admin-matching.html"><i data-lucide="sparkles" class="sidebar-link-icon" aria-hidden="true"></i>Matching</a>
+          <a class="sidebar-link dash-nav__link" href="admin-auditoria.html"><i data-lucide="scroll-text" class="sidebar-link-icon" aria-hidden="true"></i>Auditoria</a>
+        </nav>
+        <div class="dash-header-end">
+          <button type="button" class="btn-theme js-theme-toggle" id="btnAdminThemeToggle" aria-label="Cambiar tema">
+            <i data-lucide="moon" class="btn-theme__icon-dark" aria-hidden="true"></i>
+            <i data-lucide="sun" class="btn-theme__icon-light" aria-hidden="true"></i>
+          </button>
+          <div class="dash-user">
+            <div class="dash-user__avatar" aria-hidden="true"><i data-lucide="shield"></i></div>
+            <div class="dash-user__meta">
+              <div class="dash-user__name" id="adminIdentity">—</div>
+              <span class="sync-pill" id="adminStatus" role="status"></span>
+            </div>
+          </div>
+          <div class="dash-actions">
+            <a class="btn btn-ghost" href="./index.html"><i data-lucide="home" class="btn-ico" aria-hidden="true"></i>Inicio</a>
+            <button class="btn btn-secondary" type="button" id="btnAdminRefresh"><i data-lucide="refresh-cw" class="btn-ico" aria-hidden="true"></i>Actualizar</button>
+            <button class="btn btn-primary" type="button" id="btnAdminLogout"><i data-lucide="log-out" class="btn-ico" aria-hidden="true"></i>Salir</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="dash-main page-grid">
+      <section class="glass-card section section-compact reveal">
+        <div class="section-head-min">
+          <div class="section-head-min__title">
+            <i data-lucide="map-pin" aria-hidden="true"></i>
+            <h2>Mapa y zonas</h2>
+          </div>
+        </div>
+        <div id="adminMap" class="map-canvas"></div>
+        <div class="map-legend">
+          <span class="legend-item"><i data-lucide="circle" style="color:#16a34a" aria-hidden="true"></i>Bajo</span>
+          <span class="legend-item"><i data-lucide="circle" style="color:#f59e0b" aria-hidden="true"></i>Medio</span>
+          <span class="legend-item"><i data-lucide="circle" style="color:#dc2626" aria-hidden="true"></i>Alto</span>
+          <span class="legend-item"><i data-lucide="circle" style="color:#dc2626" aria-hidden="true"></i>Perdida</span>
+          <span class="legend-item"><i data-lucide="circle" style="color:#16a34a" aria-hidden="true"></i>Hallazgo</span>
+        </div>
+        <div class="table-wrap dash-table-below-map">
+          <table class="data-table" id="zonesTable"></table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="./src/config.js"></script>
+  <script src="./src/shared.js"></script>
+  <script src="./src/theme-ui.js"></script>
+  <script src="./src/dash-layout.js"></script>
+  <script src="./src/admin-dashboard.js"></script>
+  <script>
+    if (window.SANOS_DASH_LAYOUT) window.SANOS_DASH_LAYOUT.init();
+    if (window.lucide) lucide.createIcons();
+    if (window.SANOS_THEME) window.SANOS_THEME.init();
+  </script>
+</body>
+</html>

@@ -22,7 +22,7 @@
   function init() {
     const citizenSession = core.readSession("citizen");
     if (citizenSession.token && citizenSession.user) {
-      window.location.href = "./citizen-dashboard.html";
+      window.location.href = "./citizen-reporte.html";
       return;
     }
 
@@ -83,7 +83,7 @@
 
       showStatus("Cuenta creada correctamente. Redirigiendo al login...");
       window.setTimeout(() => {
-        window.location.href = "./index.html";
+        window.location.href = "./index.html?logout=1";
       }, 900);
     } catch (error) {
       showStatus(error.message, true);
@@ -92,7 +92,7 @@
 
   function showStatus(message, isError) {
     els.status.textContent = message;
-    els.status.style.color = isError ? "#b74f4f" : "";
+    els.status.classList.toggle("is-error", Boolean(isError));
   }
 
   function normalizeRut(value) {

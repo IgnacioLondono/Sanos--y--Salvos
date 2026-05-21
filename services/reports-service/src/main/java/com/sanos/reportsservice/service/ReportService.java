@@ -43,6 +43,11 @@ public class ReportService {
         return reporteRepo.findByEstado(status).stream().map(this::toDto).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ReportDto> findByUser(Long userId) {
+        return reporteRepo.findByIdUsuarioCreador(userId).stream().map(this::toDto).toList();
+    }
+
     @Transactional
     public ReportDto create(ReportDto req) {
         ReporteEvento rep = new ReporteEvento();
@@ -81,6 +86,13 @@ public class ReportService {
     }
 
     private ReportDto toDto(ReporteEvento r) {
+        if (r == null) {
+            return null;
+        }
+        // Handle missing coordinates gracefully - use 0 as default if null
+        var latitude = r.getLatitud() != null ? r.getLatitud() : java.math.BigDecimal.ZERO;
+        var longitude = r.getLongitud() != null ? r.getLongitud() : java.math.BigDecimal.ZERO;
+        
         return new ReportDto(
                 r.getIdReporte(),
                 r.getIdMascota(),
@@ -90,8 +102,8 @@ public class ReportService {
                 r.getComuna(),
                 r.getDescripcion(),
                 r.getEstadoSalud(),
-                r.getLatitud(),
-                r.getLongitud(),
+                latitude,
+                longitude,
                 r.getFechaCreacion() != null ? r.getFechaCreacion().toString() : null
         );
     }

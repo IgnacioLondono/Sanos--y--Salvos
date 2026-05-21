@@ -143,6 +143,21 @@ services:
     networks:
       - sanos-net
 
+  forum-service:
+    build: ./services/forum-service
+    container_name: sanos-forum
+    ports:
+      - "8099:8099"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_foro?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: sanos
+      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-net
+
   bff:
     build: ./bff
     container_name: sanos-bff
@@ -157,6 +172,7 @@ services:
       MATCHING_SERVICE_URL: http://matching-service:8096
       CAPACITY_SERVICE_URL: http://capacity-service:8097
       AUDIT_SERVICE_URL: http://audit-service:8098
+      FORUM_SERVICE_URL: http://forum-service:8099
     depends_on:
       iam-service:
         condition: service_started
@@ -173,6 +189,8 @@ services:
       capacity-service:
         condition: service_started
       audit-service:
+        condition: service_started
+      forum-service:
         condition: service_started
     networks:
       - sanos-net
@@ -191,6 +209,7 @@ services:
       MATCHING_SERVICE_URL: http://matching-service:8096
       CAPACITY_SERVICE_URL: http://capacity-service:8097
       AUDIT_SERVICE_URL: http://audit-service:8098
+      FORUM_SERVICE_URL: http://forum-service:8099
       BFF_SERVICE_URL: http://bff:8081
       SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
     depends_on:

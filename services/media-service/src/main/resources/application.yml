@@ -4,11 +4,21 @@ server:
 spring:
   application:
     name: media-service
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/sanosysalvos?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,6 +26,14 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+  jackson:
+    serialization:
+      write-big-decimal-as-plain: true
+
+sanos:
+  media:
+    upload-dir: ${SANOS_MEDIA_UPLOAD_DIR:uploads}
+    public-base-path: /api/media/files
 
 management:
   endpoints:

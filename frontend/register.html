@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sanos y Salvos | Crear cuenta</title>
+  <title>Sanos y Salvos | Registro</title>
   <meta name="description" content="Registro en Sanos y Salvos." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,99 +12,177 @@
     rel="stylesheet"
   >
   <link rel="stylesheet" href="./src/styles.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("sanos-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
 </head>
 <body class="auth-page">
   <div class="ambient ambient-a"></div>
   <div class="ambient ambient-b"></div>
 
   <div class="auth-viewport auth-viewport-register">
-    <section class="auth-card auth-card-register reveal">
-      <div class="auth-header auth-header-register">
-        <img class="brand-logo" src="./src/logo.svg" alt="Sanos y Salvos" />
-        <h1 class="auth-title">Crear cuenta</h1>
+    <section class="auth-card auth-card-register glass-card reveal">
+      <div class="auth-headline auth-header-register">
+        <div class="auth-brand-ico" aria-hidden="true">
+          <img class="brand-logo" src="./src/logo.svg" alt="" width="26" height="26" />
+        </div>
+        <div>
+          <h1 class="auth-title">Nueva cuenta</h1>
+          <p class="auth-note">Ciudadano</p>
+        </div>
       </div>
 
+      <nav class="auth-tabs" aria-label="Acceso">
+        <a class="auth-tab is-active" href="./register.html" aria-current="page">
+          <i data-lucide="user-plus" aria-hidden="true"></i>
+          Registro
+        </a>
+        <a class="auth-tab" href="./index.html">
+          <i data-lucide="log-in" aria-hidden="true"></i>
+          Iniciar sesión
+        </a>
+      </nav>
+
       <form class="register-form" id="registerForm" novalidate>
-        <fieldset class="register-block">
-          <legend>Identidad</legend>
-          <div class="form-grid two-cols form-grid-compact">
-            <label class="field">
-              <span>Nombre completo</span>
-              <input id="fullName" type="text" placeholder="Nombre y apellido" autocomplete="name" />
-            </label>
-            <label class="field">
-              <span>RUT</span>
-              <input id="rutDocument" type="text" placeholder="12345678-9" autocomplete="off" />
-            </label>
-            <label class="field">
-              <span>Correo</span>
-              <input id="email" type="email" placeholder="tu-correo@dominio.cl" autocomplete="email" />
-            </label>
-            <label class="field">
-              <span>Contrasena</span>
-              <input id="password" type="password" placeholder="Min. 10 caracteres" autocomplete="new-password" />
-            </label>
-          </div>
-        </fieldset>
+        <div class="register-steps">
+          <fieldset class="register-step">
+            <legend class="register-step-h">
+              <i data-lucide="user" aria-hidden="true"></i>
+              Tu perfil
+            </legend>
+            <div class="form-grid two-cols form-grid-compact">
+              <label class="field">
+                <span>Nombre</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="user-circle" aria-hidden="true"></i>
+                  <input id="fullName" type="text" placeholder="Nombre y apellido" autocomplete="name" />
+                </div>
+              </label>
+              <label class="field">
+                <span>RUT</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="id-card" aria-hidden="true"></i>
+                  <input id="rutDocument" type="text" placeholder="12345678-9" autocomplete="off" />
+                </div>
+              </label>
+              <label class="field">
+                <span>Correo</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="mail" aria-hidden="true"></i>
+                  <input id="email" type="email" placeholder="correo@ejemplo.cl" autocomplete="email" />
+                </div>
+              </label>
+              <label class="field">
+                <span>Contrasena</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="lock" aria-hidden="true"></i>
+                  <input id="password" type="password" placeholder="10+ caracteres" autocomplete="new-password" />
+                </div>
+              </label>
+            </div>
+          </fieldset>
 
-        <fieldset class="register-block">
-          <legend>Ubicacion</legend>
-          <div class="form-grid two-cols form-grid-compact">
-            <label class="field">
-              <span>Comuna</span>
-              <input id="commune" type="text" placeholder="Providencia" autocomplete="address-level2" />
-            </label>
-            <label class="field">
-              <span>Telefono</span>
-              <input id="phone" type="text" placeholder="+56 9 1234 5678" autocomplete="tel" />
-            </label>
-            <label class="field field-span-2">
-              <span>Direccion</span>
-              <input id="address" type="text" placeholder="Calle y numero" autocomplete="street-address" />
-            </label>
-          </div>
-        </fieldset>
+          <fieldset class="register-step">
+            <legend class="register-step-h">
+              <i data-lucide="map-pin" aria-hidden="true"></i>
+              Ubicacion
+            </legend>
+            <div class="form-grid two-cols form-grid-compact">
+              <label class="field">
+                <span>Comuna</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="building-2" aria-hidden="true"></i>
+                  <input id="commune" type="text" placeholder="Ej. Providencia" autocomplete="address-level2" />
+                </div>
+              </label>
+              <label class="field">
+                <span>Telefono</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="phone" aria-hidden="true"></i>
+                  <input id="phone" type="text" placeholder="+56 9 ..." autocomplete="tel" />
+                </div>
+              </label>
+              <label class="field field-span-2">
+                <span>Direccion</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="home" aria-hidden="true"></i>
+                  <input id="address" type="text" placeholder="Calle y numero" autocomplete="street-address" />
+                </div>
+              </label>
+            </div>
+          </fieldset>
 
-        <fieldset class="register-block">
-          <legend>Emergencia</legend>
-          <div class="form-grid two-cols form-grid-compact">
-            <label class="field">
-              <span>Contacto</span>
-              <input id="emergencyContactName" type="text" placeholder="Nombre del contacto" autocomplete="off" />
-            </label>
-            <label class="field">
-              <span>Telefono</span>
-              <input id="emergencyContactPhone" type="text" placeholder="+56 9 9876 5432" autocomplete="tel" />
-            </label>
-          </div>
-        </fieldset>
+          <fieldset class="register-step">
+            <legend class="register-step-h">
+              <i data-lucide="heart-pulse" aria-hidden="true"></i>
+              Emergencia
+            </legend>
+            <div class="form-grid two-cols form-grid-compact">
+              <label class="field">
+                <span>Contacto</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="user-plus" aria-hidden="true"></i>
+                  <input id="emergencyContactName" type="text" placeholder="Nombre" autocomplete="off" />
+                </div>
+              </label>
+              <label class="field">
+                <span>Telefono</span>
+                <div class="input-ico-wrap">
+                  <i data-lucide="phone" aria-hidden="true"></i>
+                  <input id="emergencyContactPhone" type="text" placeholder="+56 9 ..." autocomplete="tel" />
+                </div>
+              </label>
+            </div>
+          </fieldset>
+        </div>
 
         <div class="checks-grid checks-grid-compact">
           <label class="check-line">
             <input id="acceptTerms" type="checkbox" />
-            <span>Acepto los terminos de uso.</span>
+            <span>Terminos de uso</span>
           </label>
           <label class="check-line">
             <input id="acceptPrivacy" type="checkbox" />
-            <span>Acepto la politica de privacidad.</span>
+            <span>Privacidad</span>
           </label>
         </div>
 
         <div class="action-row auth-actions">
-          <button id="btnRegister" class="btn btn-primary" type="button">Registrar</button>
+          <button id="btnRegister" class="btn btn-primary" type="button">
+            <i data-lucide="check" class="btn-ico" aria-hidden="true"></i>
+            Registrar
+          </button>
         </div>
       </form>
 
-      <p id="registerStatus" class="inline-feedback">Revisa los datos antes de enviar.</p>
+      <p id="registerStatus" class="auth-status-line" role="status"></p>
 
       <div class="auth-links auth-links-center">
-        <a href="./index.html">Volver al login</a>
+        <a href="./index.html"><i data-lucide="log-in" aria-hidden="true"></i>Ya tengo cuenta</a>
       </div>
     </section>
   </div>
 
+  <button type="button" class="btn-theme btn-theme--fab js-theme-toggle" aria-label="Cambiar tema">
+    <i data-lucide="moon" class="btn-theme__icon-dark" aria-hidden="true"></i>
+    <i data-lucide="sun" class="btn-theme__icon-light" aria-hidden="true"></i>
+  </button>
+
   <script src="./src/config.js"></script>
   <script src="./src/shared.js"></script>
+  <script src="./src/theme-ui.js"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="./src/register-auth.js"></script>
+  <script>
+    if (window.lucide) lucide.createIcons();
+    if (window.SANOS_THEME) window.SANOS_THEME.init();
+  </script>
 </body>
 </html>

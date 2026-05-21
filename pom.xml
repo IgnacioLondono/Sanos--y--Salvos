@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.sanos</groupId>
+  <artifactId>sanos-y-salvos</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Sanos y Salvos</name>
+  <description>Agregador Maven para microservicios (importar en el IDE desde la raíz del repo)</description>
+  <modules>
+    <module>services/iam-service</module>
+    <module>services/pet-catalog-service</module>
+    <module>services/reports-service</module>
+    <module>services/geo-intelligence-service</module>
+    <module>services/media-service</module>
+    <module>services/matching-service</module>
+    <module>services/capacity-service</module>
+    <module>services/audit-service</module>
+    <module>services/forum-service</module>
+    <module>gateway</module>
+    <module>bff</module>
+  </modules>
+</project>

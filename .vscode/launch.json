@@ -1,0 +1,113 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "IamServiceApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.iamservice.IamServiceApplication",
+      "projectName": "iam-service"
+    },
+    {
+      "type": "java",
+      "name": "MatchingServiceApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.matchingservice.MatchingServiceApplication",
+      "projectName": "matching-service"
+    },
+    {
+      "type": "java",
+      "name": "MediaServiceApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.mediaservice.MediaServiceApplication",
+      "projectName": "media-service"
+    },
+    {
+      "type": "java",
+      "name": "PetCatalogServiceApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.petcatalogservice.PetCatalogServiceApplication",
+      "projectName": "pet-catalog-service"
+    },
+    {
+      "type": "java",
+      "name": "ReportsServiceApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.reportsservice.ReportsServiceApplication",
+      "projectName": "reports-service"
+    },
+    {
+      "type": "java",
+      "name": "BffApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.bff.BffApplication",
+      "projectName": "bff"
+    },
+    {
+      "type": "java",
+      "name": "GatewayApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.gateway.GatewayApplication",
+      "projectName": "gateway"
+    },
+    {
+      "type": "java",
+      "name": "AuditServiceApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.auditservice.AuditServiceApplication",
+      "projectName": "audit-service"
+    },
+    {
+      "type": "java",
+      "name": "CapacityServiceApplication",
+      "request": "launch",
+      "mainClass": "com.sanos.capacityservice.CapacityServiceApplication",
+      "projectName": "capacity-service"
+    },
+    {
+      "type": "spring-boot",
+      "request": "launch",
+      "name": "Geo — Run / Debug",
+      "cwd": "${workspaceFolder}/services/geo-intelligence-service",
+      "mainClass": "com.sanos.geointelligenceservice.GeoIntelligenceServiceApplication",
+      "vmArgs": "-Dspring.profiles.active=xampp",
+      "preLaunchTask": "geo: preparar arranque",
+      "env": {
+        "SPRING_DATASOURCE_URL": "jdbc:mysql://localhost:3306/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false",
+        "SPRING_DATASOURCE_USERNAME": "root",
+        "SPRING_DATASOURCE_PASSWORD": ""
+      }
+    },
+    {
+      "type": "java",
+      "name": "Geo — Debug (Java)",
+      "request": "launch",
+      "mainClass": "com.sanos.geointelligenceservice.GeoIntelligenceServiceApplication",
+      "projectName": "geo-intelligence-service",
+      "vmArgs": "-Dspring.profiles.active=xampp",
+      "preLaunchTask": "geo: preparar arranque"
+    },
+    {
+      "type": "spring-boot",
+      "request": "launch",
+      "name": "Foro — Run / Debug",
+      "cwd": "${workspaceFolder}/services/forum-service",
+      "mainClass": "com.sanos.forumservice.ForumServiceApplication",
+      "vmArgs": "-Dspring.profiles.active=xampp",
+      "env": {
+        "SPRING_DATASOURCE_URL": "jdbc:mysql://localhost:3306/db_foro?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false",
+        "SPRING_DATASOURCE_USERNAME": "root",
+        "SPRING_DATASOURCE_PASSWORD": ""
+      }
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Foro — Debug (Java, requiere Maven importado)",
+      "mainClass": "com.sanos.forumservice.ForumServiceApplication",
+      "projectName": "forum-service",
+      "vmArgs": "-Dspring.profiles.active=xampp",
+      "preLaunchTask": "Maven: compile forum-service"
+    }
+  ]
+}

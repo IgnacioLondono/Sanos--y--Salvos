@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "geo: liberar puerto 8094",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$p = Get-NetTCPConnection -LocalPort 8094 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; if ($p) { $p | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; Write-Host 'Puerto 8094 liberado.' } else { Write-Host 'Puerto 8094 ya estaba libre.' }"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: compile geo-intelligence-service",
+      "type": "shell",
+      "command": "mvn",
+      "args": ["-q", "-DskipTests", "compile"],
+      "options": {
+        "cwd": "${workspaceFolder}/services/geo-intelligence-service"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "geo: preparar arranque",
+      "dependsOn": ["geo: liberar puerto 8094", "Maven: compile geo-intelligence-service"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: compile forum-service",
+      "type": "shell",
+      "command": "mvn",
+      "args": ["-q", "-DskipTests", "compile"],
+      "options": {
+        "cwd": "${workspaceFolder}/services/forum-service"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

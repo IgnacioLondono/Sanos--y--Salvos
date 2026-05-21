@@ -4,14 +4,14 @@ Plataforma distribuida para registro, reporte y coincidencia de mascotas perdida
 
 ## Arquitectura
 
-- **8 microservicios Spring Boot** (IAM, Catalogo de mascotas, Reportes, Geo-inteligencia, Media, Matching IA, Capacity, Auditoria) con JPA + MySQL.
+- **9 microservicios Spring Boot** (IAM, Catalogo de mascotas, Reportes, Geo-inteligencia, Media, Matching IA, Capacity, Auditoria, **Foro**) con JPA + MySQL.
 - **API Gateway** con validacion de JWT, CORS y rate limiting basico.
 - **BFF (Backend for Frontend)** para agregacion resiliente (dashboard, mapa, detalle de mascota).
 - **Frontend web** (HTML + JS vanilla) con pantallas por rol y mapa Leaflet/OpenStreetMap.
-- **Database per Service**: un unico contenedor MySQL expone 8 esquemas aislados (`db_iam`, `db_pets`, `db_reports`, `db_geo`, `db_media`, `db_matching`, `db_capacity`, `db_audit`).
+- **Base de datos**: patron **database per service** (`db_iam`, `db_pets`, `db_reports`, `db_geo`, `db_media`, `db_matching`, `db_capacity`, `db_audit`, **`db_foro`**). Ver `db/init.sql` y `docs/XAMPP.md`.
 - **Seguridad**: contrasenas con BCrypt y JWT firmado (HMAC-SHA, 32+ chars) compartido entre IAM y Gateway.
 - **Data seeding** en cada microservicio: al primer arranque la web ya trae mascotas, reportes, zonas, multimedia, capacity y auditoria de ejemplo.
-- **OpenAPI / Swagger**: cada servicio expone su spec; el **gateway** agrega los 9 contratos (8 microservicios + BFF) en una sola Swagger UI con selector.
+- **OpenAPI / Swagger**: cada servicio expone su spec; el **gateway** agrega los 10 contratos (9 microservicios + BFF) en una sola Swagger UI con selector.
 
 ### Diagrama logico
 
@@ -25,6 +25,7 @@ Plataforma distribuida para registro, reporte y coincidencia de mascotas perdida
                               -> [Matching :8096]     -> (db_matching)
                               -> [Capacity :8097]     -> (db_capacity)
                               -> [Audit :8098]        -> (db_audit)
+                              -> [Forum :8099]        -> (hilos_foro, mensajes_foro)
 ```
 
 ## Ejecutar con Docker
@@ -49,11 +50,22 @@ Los 8 esquemas se crean automaticamente a partir de `db/init.sql`. Hibernate (`d
 
 - Swagger UI unificado: `http://localhost:8080/swagger-ui/index.html`
 - Cada opcion carga el OpenAPI 3 del microservicio correspondiente (rutas internas proxy: `/openapi/{servicio}/v3/api-docs`).
-- En la descripcion de cada API figuran el **esquema MySQL** y las **tablas** del dominio (17 tablas repartidas en 8 bases).
+- En la descripcion de cada API figuran el **esquema MySQL** y las **tablas** del dominio. Documentacion tecnica del foro: `docs/FORO-TC.md`.
 - Esquema de seguridad **Bearer JWT** documentado en cada servicio; para probar endpoints protegidos: `POST /api/iam/login` y luego **Authorize** en Swagger con el token.
 - En codigo: cada **controlador** usa `@Tag`, `@Operation`, `@Parameter` y `@ApiResponse` donde aplica; **DTOs (records)** y **entidades JPA** llevan `@Schema` con descripcion de campos y mapeo a tablas SQL.
 
-**Swagger directo por puerto** (sin gateway), por ejemplo: `http://localhost:8091/swagger-ui/index.html` (IAM), `8092` (mascotas), … `8098` (auditoria), `8081` (BFF).
+**Swagger directo por puerto** (sin gateway), por ejemplo: `http://localhost:8091/swagger-ui/index.html` (IAM), `8092` (mascotas), … `8098` (auditoria), **`8099` (foro)**, `8081` (BFF).
+
+## XAMPP (Apache + MySQL + phpMyAdmin)
+
+Guia completa: **[docs/XAMPP.md](docs/XAMPP.md)**
+
+1. Inicia MySQL en XAMPP (puerto 3306).
+2. Importa `db/init.sql` en phpMyAdmin (base `sanosysalvos`).
+3. Opcional: `db/schema-foro.sql` para tablas del foro.
+4. Arranca microservicios con Maven (`root` / sin password por defecto).
+5. Script rapido: `.\scripts\run-xampp.ps1 -Service forum` (foro en 8099).
+6. Frontend: `npx http-server frontend -p 5173` o copia `frontend` a `htdocs`.
 
 ## Credenciales pre-cargadas
 
@@ -65,7 +77,10 @@ Los 8 esquemas se crean automaticamente a partir de `db/init.sql`. Hibernate (`d
 - `index.html` - Login unico (mismo formulario para ciudadano y admin; el rol del JWT define el dashboard).
 - `register.html` - Registro ciudadano con RUT, comuna, contacto de emergencia, aceptacion de terminos.
 - `admin-login.html` - Login exclusivo de administrador.
-- `citizen-dashboard.html` - Mapa de reportes (clic para fijar coordenadas), alta de mascotas, reportes, multimedia, listados y coincidencias.
+- `citizen-reporte.html` - Flujo unificado de reporte (mascota, mapa, foto).
+- `citizen-foro.html` - Foro comunitario (hilos, respuestas, nuevo hilo).
+- `citizen-perfil.html` - Perfil e historial de reportes.
+- `citizen-mapa.html`, `citizen-actividad.html` - Mapa y actividad.
 - `admin-dashboard.html` - Salud de microservicios, KPIs, usuarios IAM, reportes, capacity, mapa de zonas de riesgo (Leaflet), matching y auditoria.
 
 Ambos dashboards integran Leaflet + OpenStreetMap sin requerir API key.
@@ -89,11 +104,12 @@ Ambos dashboards integran Leaflet + OpenStreetMap sin requerir API key.
 - Matching IA: `GET /api/matching`, `POST /api/matching/run`, `GET /api/matching/report/{reportId}`.
 - Capacity: `GET/POST /api/capacity`, `GET /api/capacity/zone/{zone}`, `GET /api/capacity/summary`.
 - Auditoria: `GET /api/audit`, `GET /api/audit/entity/{entity}`, `GET /api/audit/actor/{actor}`.
+- **Foro:** `GET /api/forum/threads`, `GET /api/forum/threads/{id}`, `POST /api/forum/threads`, `POST /api/forum/threads/{id}/posts`, `GET /api/forum/health`.
 - BFF: `GET /api/bff/dashboard`, `GET /api/bff/map`, `GET /api/bff/pet-overview/{petId}`, `GET /api/bff/health`.
 
 Todos los servicios exponen `/api/<dominio>/health` como endpoint publico para el panel de estado del admin.
 
-## Modelo de datos (17 tablas, 8 dominios en 3FN)
+## Modelo de datos (19 tablas, 9 dominios en 3FN)
 
 - **IAM**: `usuarios`, `credenciales`, `contactos_usuario`.
 - **Catalogo**: `mascotas`, `caracteristicas_fisicas`, `vinculos_mascotas`.
@@ -103,13 +119,15 @@ Todos los servicios exponen `/api/<dominio>/health` como endpoint publico para e
 - **Matching**: `coincidencias_ia`, `desglose_similitud`.
 - **Capacity**: `equipos_colaboracion`, `asignacion_capacidad`.
 - **Auditoria**: `log_auditoria`, `notificaciones_sistema`.
+- **Foro** (`db_foro`): `hilos_foro`, `mensajes_foro` (ver `db/schema-foro.sql` y `docs/FORO-TC.md`).
 
 ## Desarrollo local (sin Docker)
 
 1. Levantar MySQL 8 y aplicar `db/init.sql`.
-2. Compilar y ejecutar cada microservicio con `mvn spring-boot:run` usando los puertos 8091-8098 y el BFF en 8081.
-3. Ejecutar el gateway en 8080 con `SANOS_JWT_SECRET` alineado al del IAM.
-4. Servir `frontend/` con cualquier servidor estatico (por ejemplo `npx http-server frontend -p 5173`).
+2. Compilar y ejecutar cada microservicio con `mvn spring-boot:run` usando los puertos 8091-8099 y el BFF en 8081.
+3. Con XAMPP: ver `docs/XAMPP.md` y `scripts/run-xampp.ps1`.
+4. Ejecutar el gateway en 8080 con `SANOS_JWT_SECRET` alineado al del IAM.
+5. Servir `frontend/` con cualquier servidor estatico (por ejemplo `npx http-server frontend -p 5173`).
 
 ## Troubleshooting
 

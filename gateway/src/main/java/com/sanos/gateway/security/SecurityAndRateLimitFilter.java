@@ -26,7 +26,8 @@ public class SecurityAndRateLimitFilter implements GlobalFilter, Ordered {
             "/api/pets",
             "/api/matching",
             "/api/zones",
-            "/api/media"
+            "/api/media",
+            "/api/forum"
     );
 
     private static final List<String> PUBLIC_PREFIXES = List.of(
@@ -44,6 +45,7 @@ public class SecurityAndRateLimitFilter implements GlobalFilter, Ordered {
             "/api/matching/health",
             "/api/capacity/health",
             "/api/audit/health",
+            "/api/forum/health",
             "/api/bff/health",
             "/actuator/health"
     );

@@ -3,9 +3,16 @@
 **/.mvn/
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 .idea/
 *.iml
+.project
+.classpath
+.settings/
 
 # OS
 .DS_Store

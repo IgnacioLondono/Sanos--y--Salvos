@@ -1,6 +1,10 @@
 package com.sanos.reportsservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
@@ -14,7 +18,17 @@ public record ReportDto(
         @Schema(description = "Comuna del hecho") String commune,
         @Schema(description = "Texto libre") String description,
         @Schema(description = "Condicion salud observada") String healthStatus,
-        @Schema(description = "Latitud WGS84", example = "-33.448900") BigDecimal latitude,
-        @Schema(description = "Longitud WGS84", example = "-70.669300") BigDecimal longitude,
+        @JsonProperty("latitude")
+        @Schema(description = "Latitud WGS84", example = "-33.448900")
+        @NotNull(message = "Latitude cannot be null")
+        @DecimalMin(value = "-90", message = "Latitude must be between -90 and 90")
+        @DecimalMax(value = "90", message = "Latitude must be between -90 and 90")
+        BigDecimal latitude,
+        @JsonProperty("longitude")
+        @Schema(description = "Longitud WGS84", example = "-70.669300")
+        @NotNull(message = "Longitude cannot be null")
+        @DecimalMin(value = "-180", message = "Longitude must be between -180 and 180")
+        @DecimalMax(value = "180", message = "Longitude must be between -180 and 180")
+        BigDecimal longitude,
         @Schema(description = "fecha_creacion ISO", accessMode = Schema.AccessMode.READ_ONLY) String createdAt
 ) {}

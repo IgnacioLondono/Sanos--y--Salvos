@@ -75,6 +75,36 @@ public class IamController {
         }
     }
 
+    @Operation(summary = "Perfil del usuario autenticado")
+    @GetMapping({"/profile", "/users/me"})
+    public ResponseEntity<?> currentUser(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Token requerido"));
+        }
+        try {
+            return ResponseEntity.ok(authService.profileFromToken(authorization.substring(7)));
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Actualizar perfil del usuario autenticado")
+    @PatchMapping({"/profile", "/users/me"})
+    public ResponseEntity<?> updateProfile(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestBody UpdateProfileRequest body) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Token requerido"));
+        }
+        try {
+            UserDto dto = authService.updateProfile(authorization.substring(7), body);
+            return ResponseEntity.ok(dto);
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", ex.getMessage()));
+        }
+    }
+
     @Operation(summary = "Cambiar contrasena", description = "Requiere Authorization: Bearer JWT del usuario. Actualiza hash en credenciales.")
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(

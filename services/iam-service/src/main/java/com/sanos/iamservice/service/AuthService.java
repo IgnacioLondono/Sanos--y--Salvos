@@ -108,6 +108,55 @@ public class AuthService {
         return new LoginResponse(token, dto.id(), dto.email(), dto.displayName(), role);
     }
 
+    @Transactional(readOnly = true)
+    public UserDto profileFromToken(String bearerToken) {
+        long userId = userIdFromToken(bearerToken);
+        Usuario usuario = usuarioRepo.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
+        var contacto = contactoRepo.findByIdUsuario(userId).orElse(null);
+        return UserDto.fromEntities(usuario, contacto);
+    }
+
+    @Transactional
+    public UserDto updateProfile(String bearerToken, UpdateProfileRequest req) {
+        long userId = userIdFromToken(bearerToken);
+        Usuario usuario = usuarioRepo.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
+
+        if (req.fullName() != null && !req.fullName().isBlank()) {
+            usuario.setNombreCompleto(req.fullName().trim());
+        }
+        if (req.commune() != null) {
+            usuario.setComuna(req.commune().trim());
+        }
+        if (req.address() != null) {
+            usuario.setDireccion(req.address().trim());
+        }
+        if (req.emergencyContactName() != null) {
+            usuario.setContactoEmergenciaNombre(req.emergencyContactName().trim());
+        }
+        if (req.emergencyContactPhone() != null) {
+            usuario.setContactoEmergenciaTelefono(req.emergencyContactPhone().trim());
+        }
+        usuarioRepo.save(usuario);
+
+        ContactoUsuario contacto = contactoRepo.findByIdUsuario(userId).orElse(null);
+        if (contacto != null && req.phone() != null) {
+            contacto.setTelefonoPrincipal(req.phone().trim());
+            contactoRepo.save(contacto);
+        }
+
+        return UserDto.fromEntities(usuario, contacto);
+    }
+
+    private long userIdFromToken(String bearerToken) {
+        try {
+            return Long.parseLong(jwtTokenService.parseClaims(bearerToken).getSubject());
+        } catch (JwtException | IllegalArgumentException ex) {
+            throw new IllegalStateException("Token invalido");
+        }
+    }
+
     @Transactional
     public void changePassword(String bearerToken, String currentPassword, String newPassword) {
         if (currentPassword == null || newPassword == null || newPassword.isBlank()) {

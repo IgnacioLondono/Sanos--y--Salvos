@@ -128,6 +128,64 @@
     return data;
   }
 
+  function getApiBaseUrl() {
+    return loadSettings().apiBaseUrl;
+  }
+
+  function mediaUrl(pathOrUrl) {
+    if (!pathOrUrl) return "";
+    const value = String(pathOrUrl);
+    if (value.startsWith("http://") || value.startsWith("https://")) {
+      return value;
+    }
+    const base = getApiBaseUrl();
+    return value.startsWith("/") ? `${base}${value}` : `${base}/${value}`;
+  }
+
+  async function apiUpload(path, formData, options) {
+    const opts = options || {};
+    const settings = loadSettings();
+    const headers = {};
+
+    if (opts.auth !== false && opts.token) {
+      headers.Authorization = `Bearer ${opts.token}`;
+    }
+
+    let response;
+    try {
+      response = await fetch(`${settings.apiBaseUrl}${path}`, {
+        method: "POST",
+        headers,
+        body: formData
+      });
+    } catch (error) {
+      throw new Error(
+        `No se pudo conectar con el backend (${settings.apiBaseUrl}). Verifica gateway encendido, URL API y CORS.`
+      );
+    }
+
+    const text = await response.text();
+    let data = null;
+
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        data = text;
+      }
+    }
+
+    if (!response.ok) {
+      const message =
+        (data && data.error) ||
+        (typeof data === "string" ? data : "") ||
+        `Error ${response.status} en ${path}`;
+      throw new Error(message);
+    }
+
+    return data;
+  }
+
   function escapeHtml(value) {
     return String(value)
       .replaceAll("&", "&amp;")
@@ -155,6 +213,12 @@
     return date.toLocaleString();
   }
 
+  function refreshIcons() {
+    if (window.lucide && typeof lucide.createIcons === "function") {
+      lucide.createIcons();
+    }
+  }
+
   window.SANOS_CORE = {
     storageKeys,
     inferApiBaseUrl,
@@ -165,8 +229,12 @@
     writeSession,
     clearSession,
     api,
+    apiUpload,
+    getApiBaseUrl,
+    mediaUrl,
     escapeHtml,
     truncate,
-    formatDate
+    formatDate,
+    refreshIcons
   };
 })();

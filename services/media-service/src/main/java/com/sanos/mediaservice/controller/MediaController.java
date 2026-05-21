@@ -9,14 +9,21 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.sanos.mediaservice.config.MediaStorageProperties;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/media")
@@ -25,9 +32,11 @@ import java.util.Map;
 public class MediaController {
 
     private final FotografiaMascotaRepository repo;
+    private final MediaStorageProperties storageProperties;
 
-    public MediaController(FotografiaMascotaRepository repo) {
+    public MediaController(FotografiaMascotaRepository repo, MediaStorageProperties storageProperties) {
         this.repo = repo;
+        this.storageProperties = storageProperties;
     }
 
     @Operation(summary = "Listar todas las fotos")
@@ -35,6 +44,43 @@ public class MediaController {
     @GetMapping
     public List<MediaDto> list() {
         return repo.findAll().stream().map(this::toDto).toList();
+    }
+
+    @Operation(summary = "Subir archivo de imagen", description = "Multipart: file, petId, reportId (opcionales), tags.")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "petId", required = false) Long petId,
+            @RequestParam(value = "reportId", required = false) Long reportId,
+            @RequestParam(value = "tags", required = false) String tags) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Archivo requerido"));
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Solo se permiten imagenes"));
+        }
+        try {
+            Path dir = Path.of(storageProperties.getUploadDir()).toAbsolutePath().normalize();
+            Files.createDirectories(dir);
+            String ext = extensionFrom(file.getOriginalFilename(), contentType);
+            String storedName = UUID.randomUUID() + ext;
+            Path target = dir.resolve(storedName);
+            Files.write(target, file.getBytes());
+
+            String publicUrl = storageProperties.getPublicBasePath() + "/" + storedName;
+            FotografiaMascota f = new FotografiaMascota();
+            f.setIdMascota(petId);
+            f.setIdReporte(reportId);
+            f.setUrlAlmacenamiento(publicUrl);
+            f.setTags(tags == null ? "" : tags.trim());
+            f.setFechaCaptura(LocalDateTime.now());
+            f = repo.save(f);
+            return ResponseEntity.status(HttpStatus.CREATED).body(toDto(f));
+        } catch (IOException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "No se pudo guardar el archivo"));
+        }
     }
 
     @Operation(summary = "Subir registro multimedia", description = "Crea fila con url, tags y fecha.")
@@ -91,5 +137,20 @@ public class MediaController {
         } catch (Exception ex) {
             return LocalDateTime.now();
         }
+    }
+
+    private String extensionFrom(String originalName, String contentType) {
+        if (originalName != null && originalName.contains(".")) {
+            String ext = originalName.substring(originalName.lastIndexOf('.')).toLowerCase();
+            if (ext.matches("\\.(jpg|jpeg|png|gif|webp)")) {
+                return ext;
+            }
+        }
+        return switch (contentType) {
+            case "image/png" -> ".png";
+            case "image/gif" -> ".gif";
+            case "image/webp" -> ".webp";
+            default -> ".jpg";
+        };
     }
 }

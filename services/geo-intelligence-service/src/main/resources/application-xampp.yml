@@ -1,0 +1,9 @@
+# Perfil XAMPP: MySQL localhost:3306, usuario root sin contrasena
+spring:
+  config:
+    activate:
+      on-profile: xampp
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password:

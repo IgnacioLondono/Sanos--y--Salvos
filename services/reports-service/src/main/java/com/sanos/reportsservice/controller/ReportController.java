@@ -58,6 +58,13 @@ public class ReportController {
         return service.findByPet(petId);
     }
 
+    @Operation(summary = "Reportes por usuario creador")
+    @GetMapping("/user/{userId}")
+    public List<ReportDto> byUser(
+            @Parameter(description = "id_usuario creador", required = true) @PathVariable Long userId) {
+        return service.findByUser(userId);
+    }
+
     @Operation(summary = "Reportes por estado", description = "Filtra por campo estado (ej. OPEN).")
     @GetMapping("/status/{status}")
     public List<ReportDto> byStatus(

@@ -77,6 +77,12 @@ spring:
             - Path=/openapi/audit/**
           filters:
             - StripPrefix=2
+        - id: openapi-forum
+          uri: ${FORUM_SERVICE_URL:http://localhost:8099}
+          predicates:
+            - Path=/openapi/forum/**
+          filters:
+            - StripPrefix=2
         - id: openapi-bff
           uri: ${BFF_SERVICE_URL:http://localhost:8081}
           predicates:
@@ -115,6 +121,10 @@ spring:
           uri: ${AUDIT_SERVICE_URL:http://localhost:8098}
           predicates:
             - Path=/api/audit/**
+        - id: forum
+          uri: ${FORUM_SERVICE_URL:http://localhost:8099}
+          predicates:
+            - Path=/api/forum/**
         - id: bff
           uri: ${BFF_SERVICE_URL:http://localhost:8081}
           predicates:
@@ -167,6 +177,8 @@ springdoc:
         url: /openapi/capacity/v3/api-docs
       - name: "Auditoria"
         url: /openapi/audit/v3/api-docs
+      - name: "Foro"
+        url: /openapi/forum/v3/api-docs
       - name: "BFF"
         url: /openapi/bff/v3/api-docs
 

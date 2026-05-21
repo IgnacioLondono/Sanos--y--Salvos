@@ -16,7 +16,7 @@
   function init() {
     const existing = core.readSession("admin");
     if (existing.token && existing.user) {
-      window.location.href = "./admin-dashboard.html";
+      window.location.href = "./admin-resumen.html";
       return;
     }
 
@@ -45,7 +45,7 @@
       });
 
       showStatus("Acceso admin concedido. Redirigiendo...");
-      window.location.href = "./admin-dashboard.html";
+      window.location.href = "./admin-resumen.html";
     } catch (error) {
       showStatus(error.message, true);
     }
@@ -81,6 +81,6 @@
 
   function showStatus(message, isError) {
     els.status.textContent = message;
-    els.status.style.color = isError ? "#b74f4f" : "";
+    els.status.classList.toggle("is-error", Boolean(isError));
   }
 })();

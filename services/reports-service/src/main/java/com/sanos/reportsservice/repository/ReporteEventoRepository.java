@@ -11,4 +11,5 @@ public interface ReporteEventoRepository extends JpaRepository<ReporteEvento, Lo
     List<ReporteEvento> findByIdMascota(Long idMascota);
     List<ReporteEvento> findByEstado(String estado);
     List<ReporteEvento> findByTipoReporte(String tipoReporte);
+    List<ReporteEvento> findByIdUsuarioCreador(Long idUsuarioCreador);
 }
