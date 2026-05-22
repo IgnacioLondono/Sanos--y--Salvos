@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   >
-  <link rel="stylesheet" href="./src/styles.css" />
+  <link rel="stylesheet" href="./assets/css/styles.css" />
   <script>
     (function () {
       try {
@@ -31,7 +31,7 @@
     <section class="auth-card auth-card-register glass-card reveal">
       <div class="auth-headline auth-header-register">
         <div class="auth-brand-ico" aria-hidden="true">
-          <img class="brand-logo" src="./src/logo.svg" alt="" width="26" height="26" />
+          <img class="brand-logo" src="./assets/images/logo.svg" alt="" width="26" height="26" />
         </div>
         <div>
           <h1 class="auth-title">Nueva cuenta</h1>
@@ -175,11 +175,12 @@
     <i data-lucide="sun" class="btn-theme__icon-light" aria-hidden="true"></i>
   </button>
 
-  <script src="./src/config.js"></script>
-  <script src="./src/shared.js"></script>
-  <script src="./src/theme-ui.js"></script>
+  <script src="./src/core/paths.js"></script>
+  <script src="./src/core/config.js"></script>
+  <script src="./src/core/shared.js"></script>
+  <script src="./src/ui/theme-ui.js"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="./src/register-auth.js"></script>
+  <script src="./src/auth/register-auth.js"></script>
   <script>
     if (window.lucide) lucide.createIcons();
     if (window.SANOS_THEME) window.SANOS_THEME.init();

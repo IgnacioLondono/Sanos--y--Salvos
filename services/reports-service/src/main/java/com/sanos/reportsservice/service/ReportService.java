@@ -1,6 +1,7 @@
 package com.sanos.reportsservice.service;
 
 import com.sanos.reportsservice.dto.ReportDto;
+import com.sanos.reportsservice.messaging.ReportEventPublisher;
 import com.sanos.reportsservice.model.DetalleReporte;
 import com.sanos.reportsservice.model.ReporteEvento;
 import com.sanos.reportsservice.repository.DetalleReporteRepository;
@@ -17,10 +18,15 @@ public class ReportService {
 
     private final ReporteEventoRepository reporteRepo;
     private final DetalleReporteRepository detalleRepo;
+    private final ReportEventPublisher eventPublisher;
 
-    public ReportService(ReporteEventoRepository reporteRepo, DetalleReporteRepository detalleRepo) {
+    public ReportService(
+            ReporteEventoRepository reporteRepo,
+            DetalleReporteRepository detalleRepo,
+            ReportEventPublisher eventPublisher) {
         this.reporteRepo = reporteRepo;
         this.detalleRepo = detalleRepo;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -68,6 +74,8 @@ public class ReportService {
         detalle.setEstadoActual(rep.getEstado());
         detalle.setCondicionSalud(rep.getEstadoSalud());
         detalleRepo.save(detalle);
+
+        eventPublisher.publishReportCreated(rep);
 
         return toDto(rep);
     }

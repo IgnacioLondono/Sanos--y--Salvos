@@ -6,87 +6,75 @@ echo ============================================
 echo   SANOS Y SALVOS - ENCENDIENDO TODO
 echo ============================================
 echo.
-
-echo [1/5] Verificando Docker...
+echo [1/3] Verificando Docker...
 docker --version >nul 2>&1
 if errorlevel 1 (
-  echo [ERROR] Docker no esta instalado o no esta disponible.
+  echo.
+  echo [ERROR] Docker no está instalado o no está disponible.
   pause
   exit /b 1
 )
 
-docker ps --filter "name=sanos-gateway" --format "{{.Names}}" 2>nul | findstr /i "sanos-gateway" >nul
-set STACK_YA_CORRIENDO=!errorlevel!
-
 echo.
-if !STACK_YA_CORRIENDO! equ 0 (
-  echo [2/5] Stack ya activo en Docker Desktop. Sincronizando servicios...
-  docker compose up -d
-) else (
-  echo [2/5] Construyendo y levantando contenedores...
-  echo   MySQL 3307 ^| servicios 8091-8099 ^| BFF 8081 ^| Gateway 8080 ^| Frontend 5173
-  docker compose up --build -d
-)
+echo [2/3] Construyendo y levantando contenedores...
+echo   - MySQL (Puerto 3307)
+echo   - RabbitMQ (5672 / consola 15672)
+echo   - Forum Service (Puerto 8099)
+echo   - IAM Service (Puerto 8091)
+echo   - Pet Catalog Service (Puerto 8092)
+echo   - Reports Service (Puerto 8093)
+echo   - Geo Intelligence Service (Puerto 8094)
+echo   - Media Service (Puerto 8095)
+echo   - Matching Service (Puerto 8096)
+echo   - Capacity Service (Puerto 8097)
+echo   - Audit Service (Puerto 8098)
+echo   - BFF (Puerto 8081)
+echo   - Gateway (Puerto 8080)
+echo   - Frontend (Puerto 5173)
+echo.
 
+docker compose up --build -d
 if errorlevel 1 (
+  echo.
   echo [ERROR] No se pudieron iniciar los servicios.
   pause
   exit /b 1
 )
 
 echo.
-echo [3/5] Permisos MySQL ^(db_foro para usuario sanos^)...
-set MYSQL_OK=0
-for /L %%i in (1,1,25) do (
-  docker exec sanos-mysql mysqladmin ping -h localhost -uroot -proot >nul 2>&1
-  if !errorlevel! equ 0 (
-    set MYSQL_OK=1
-    goto :mysql_up
-  )
-  timeout /t 2 /nobreak >nul
-)
-:mysql_up
-if !MYSQL_OK! equ 0 (
-  echo   [AVISO] MySQL no responde aun. Si el foro falla, ejecuta: scripts\fix-docker-mysql.ps1
-  goto :skip_grants
-)
-docker exec -i sanos-mysql mysql -uroot -proot < "%~dp0db\docker-grants.sql" >nul 2>&1
-if errorlevel 1 (
-  echo   [AVISO] No se pudieron aplicar grants. Ejecuta: powershell -File scripts\fix-docker-mysql.ps1
-) else (
-  echo   Permisos OK ^(db_foro, db_iam, ...^)
-  docker compose restart forum-service >nul 2>&1
-)
-:skip_grants
-
+echo [3/3] Servicios levantados correctamente.
 echo.
-echo [4/5] Esperando foro (forum-service)...
-set FORO_OK=0
-for /L %%i in (1,1,40) do (
-  powershell -NoProfile -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:8099/actuator/health' -UseBasicParsing -TimeoutSec 4; if ($r.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }" >nul 2>&1
-  if !errorlevel! equ 0 (
-    set FORO_OK=1
-    goto :foro_ready
-  )
-  timeout /t 3 /nobreak >nul
-)
-:foro_ready
-if !FORO_OK! equ 0 (
-  echo   [AVISO] Foro no responde. Error tipico: Access denied db_foro
-  echo   Solucion: powershell -ExecutionPolicy Bypass -File scripts\fix-docker-mysql.ps1
-  echo   Logs: docker compose logs -f forum-service
-) else (
-  echo   Foro OK
-)
-
+echo ============================================
+echo   ENDPOINTS DISPONIBLES
+echo ============================================
 echo.
-echo [5/5] Listo.
+echo Frontend:        http://localhost:5173
+echo Gateway API:     http://localhost:8080
+echo Swagger UI:      http://localhost:8080/swagger-ui/index.html
+echo RabbitMQ UI:     http://localhost:15672  (sanos / sanos_pwd)
+echo Foro directo:    http://localhost:8099
 echo.
-echo Frontend:  http://localhost:5173/citizen-foro.html
-echo API:       http://localhost:8080/api/forum/threads
-echo Health:    http://localhost:8080/api/forum/health
+echo Servicios Individuales:
+echo   - IAM Service:              http://localhost:8091
+echo   - Pet Catalog Service:      http://localhost:8092
+echo   - Reports Service:          http://localhost:8093
+echo   - Geo Intelligence Service: http://localhost:8094
+echo   - Media Service:            http://localhost:8095
+echo   - Matching Service:         http://localhost:8096
+echo   - Capacity Service:         http://localhost:8097
+echo   - Audit Service:            http://localhost:8098
+echo   - BFF:                      http://localhost:8081
 echo.
-echo No ejecutes el foro desde el IDE si Docker usa el puerto 8099.
-echo Apagar: apagar-todo.bat
+echo ============================================
+echo   COMANDOS ÚTILES
+echo ============================================
+echo.
+echo Ver logs en vivo:
+echo   docker compose logs -f
+echo.
+echo Ver logs de un servicio específico:
+echo   docker compose logs -f [nombre-servicio]
+echo.
+echo Apagar todo: doble clic en apagar-todo.bat
 echo.
 pause

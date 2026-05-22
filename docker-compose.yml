@@ -1,10 +1,29 @@
+# Sanos y Salvos — stack completo (infra + 9 microservicios + BFF + gateway + frontend)
+# Uso: docker compose up --build -d
+# Guía: README.md y docs/RABBITMQ.md
+
+x-mysql-credentials: &mysql-credentials
+  SPRING_DATASOURCE_USERNAME: sanos
+  SPRING_DATASOURCE_PASSWORD: sanos_pwd
+
+x-rabbit-credentials: &rabbit-credentials
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_PORT: "5672"
+  SPRING_RABBITMQ_USERNAME: sanos
+  SPRING_RABBITMQ_PASSWORD: sanos_pwd
+
+x-jwt-secret: &jwt-secret
+  SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
+
 services:
+  # ─── Infraestructura ───────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.4
     container_name: sanos-mysql
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_iam
+      MYSQL_DATABASE: sanosysalvos
       MYSQL_USER: sanos
       MYSQL_PASSWORD: sanos_pwd
     ports:
@@ -17,19 +36,40 @@ services:
       interval: 10s
       timeout: 5s
       retries: 20
+      start_period: 30s
     networks:
       - sanos-net
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: sanos-rabbitmq
+    restart: unless-stopped
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: sanos
+      RABBITMQ_DEFAULT_PASS: sanos_pwd
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+    networks:
+      - sanos-net
+
+  # ─── Microservicios (database per service) ───────────────────────────────────
   iam-service:
     build: ./services/iam-service
     container_name: sanos-iam
+    restart: unless-stopped
     ports:
       - "8091:8091"
     environment:
+      <<: [*mysql-credentials, *jwt-secret]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_iam?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
-      SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
     depends_on:
       mysql:
         condition: service_healthy
@@ -39,12 +79,12 @@ services:
   pet-catalog-service:
     build: ./services/pet-catalog-service
     container_name: sanos-pets
+    restart: unless-stopped
     ports:
       - "8092:8092"
     environment:
+      <<: *mysql-credentials
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_pets?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
     depends_on:
       mysql:
         condition: service_healthy
@@ -54,14 +94,17 @@ services:
   reports-service:
     build: ./services/reports-service
     container_name: sanos-reports
+    restart: unless-stopped
     ports:
       - "8093:8093"
     environment:
+      <<: [*mysql-credentials, *rabbit-credentials]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_reports?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
+      SANOS_MESSAGING_ENABLED: "true"
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - sanos-net
@@ -69,12 +112,12 @@ services:
   geo-intelligence-service:
     build: ./services/geo-intelligence-service
     container_name: sanos-geo
+    restart: unless-stopped
     ports:
       - "8094:8094"
     environment:
+      <<: *mysql-credentials
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
     depends_on:
       mysql:
         condition: service_healthy
@@ -84,12 +127,12 @@ services:
   media-service:
     build: ./services/media-service
     container_name: sanos-media
+    restart: unless-stopped
     ports:
       - "8095:8095"
     environment:
+      <<: *mysql-credentials
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_media?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
       SANOS_MEDIA_UPLOAD_DIR: /data/uploads
     volumes:
       - media_uploads:/data/uploads
@@ -102,29 +145,33 @@ services:
   matching-service:
     build: ./services/matching-service
     container_name: sanos-matching
+    restart: unless-stopped
     ports:
       - "8096:8096"
     environment:
+      <<: [*mysql-credentials, *rabbit-credentials]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_matching?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
       PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
       REPORTS_SERVICE_URL: http://reports-service:8093
     depends_on:
       mysql:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      reports-service:
+        condition: service_started
     networks:
       - sanos-net
 
   capacity-service:
     build: ./services/capacity-service
     container_name: sanos-capacity
+    restart: unless-stopped
     ports:
       - "8097:8097"
     environment:
+      <<: *mysql-credentials
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_capacity?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
     depends_on:
       mysql:
         condition: service_healthy
@@ -134,14 +181,16 @@ services:
   audit-service:
     build: ./services/audit-service
     container_name: sanos-audit
+    restart: unless-stopped
     ports:
       - "8098:8098"
     environment:
+      <<: [*mysql-credentials, *rabbit-credentials]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_audit?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - sanos-net
@@ -149,21 +198,23 @@ services:
   forum-service:
     build: ./services/forum-service
     container_name: sanos-forum
+    restart: unless-stopped
     ports:
       - "8099:8099"
     environment:
+      <<: *mysql-credentials
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_foro?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: sanos
-      SPRING_DATASOURCE_PASSWORD: sanos_pwd
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - sanos-net
 
+  # ─── Capa de exposición ────────────────────────────────────────────────────────
   bff:
     build: ./bff
     container_name: sanos-bff
+    restart: unless-stopped
     ports:
       - "8081:8081"
     environment:
@@ -201,9 +252,11 @@ services:
   gateway:
     build: ./gateway
     container_name: sanos-gateway
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
+      <<: *jwt-secret
       IAM_SERVICE_URL: http://iam-service:8091
       PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
       REPORTS_SERVICE_URL: http://reports-service:8093
@@ -214,9 +267,12 @@ services:
       AUDIT_SERVICE_URL: http://audit-service:8098
       FORUM_SERVICE_URL: http://forum-service:8099
       BFF_SERVICE_URL: http://bff:8081
-      SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
     depends_on:
       bff:
+        condition: service_started
+      iam-service:
+        condition: service_started
+      forum-service:
         condition: service_started
     networks:
       - sanos-net
@@ -224,17 +280,22 @@ services:
   frontend:
     build: ./frontend
     container_name: sanos-frontend
+    restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:
-      - gateway
+      gateway:
+        condition: service_started
     networks:
       - sanos-net
 
 volumes:
   mysql_data:
+    name: sanos_mysql_data
   media_uploads:
+    name: sanos_media_uploads
 
 networks:
   sanos-net:
+    name: sanos_net
     driver: bridge
