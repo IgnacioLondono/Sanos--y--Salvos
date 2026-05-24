@@ -179,6 +179,10 @@
     if (!headerEnd) {
       endClone.className = "dash-header-end";
     }
+    // En ciudadano, el switch de tema queda solo en la barra lateral.
+    if (role === "citizen") {
+      endClone.querySelectorAll(".js-theme-toggle, .btn-theme").forEach((node) => node.remove());
+    }
     const navInClone = endClone.querySelector(".dash-nav");
     if (navInClone) navInClone.remove();
 

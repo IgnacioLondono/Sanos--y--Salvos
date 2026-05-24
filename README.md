@@ -211,6 +211,22 @@ docker compose down
 docker compose down -v
 ```
 
+### Build optimizado (menos picos de CPU)
+
+En PowerShell, limita el paralelismo cuando quieras compilar todo el stack sin saturar la maquina:
+
+```powershell
+$env:COMPOSE_PARALLEL_LIMIT=4
+docker compose build --parallel
+```
+
+Si solo cambiaste un servicio, compila unicamente ese servicio (mucho mas rapido):
+
+```powershell
+docker compose build iam-service
+docker compose up -d iam-service
+```
+
 ### Variables relevantes
 
 | Variable | Uso |

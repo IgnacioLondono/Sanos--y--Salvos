@@ -98,7 +98,6 @@
       try {
         let profile = null;
         const profilePaths = ["/api/iam/profile", "/api/iam/users/me"];
-        if (data.id) profilePaths.push(`/api/iam/users/${data.id}`);
         for (const path of profilePaths) {
           try {
             profile = await core.api(path, { token: data.token });

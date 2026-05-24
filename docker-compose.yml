@@ -15,6 +15,9 @@ x-rabbit-credentials: &rabbit-credentials
 x-jwt-secret: &jwt-secret
   SANOS_JWT_SECRET: sanos-y-salvos-super-secret-key-at-least-32-chars
 
+x-java-runtime-env: &java-runtime-env
+  JAVA_TOOL_OPTIONS: -XX:+UseSerialGC -XX:MaxRAMPercentage=65 -XX:InitialRAMPercentage=15 -XX:ActiveProcessorCount=1 -Djava.security.egd=file:/dev/./urandom
+
 services:
   # ─── Infraestructura ───────────────────────────────────────────────────────────
   mysql:
@@ -68,7 +71,7 @@ services:
     ports:
       - "8091:8091"
     environment:
-      <<: [*mysql-credentials, *jwt-secret]
+      <<: [*mysql-credentials, *jwt-secret, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_iam?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
     depends_on:
       mysql:
@@ -83,7 +86,7 @@ services:
     ports:
       - "8092:8092"
     environment:
-      <<: *mysql-credentials
+      <<: [*mysql-credentials, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_pets?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
     depends_on:
       mysql:
@@ -98,7 +101,7 @@ services:
     ports:
       - "8093:8093"
     environment:
-      <<: [*mysql-credentials, *rabbit-credentials]
+      <<: [*mysql-credentials, *rabbit-credentials, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_reports?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
       SANOS_MESSAGING_ENABLED: "true"
     depends_on:
@@ -116,7 +119,7 @@ services:
     ports:
       - "8094:8094"
     environment:
-      <<: *mysql-credentials
+      <<: [*mysql-credentials, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_geo?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
     depends_on:
       mysql:
@@ -131,7 +134,7 @@ services:
     ports:
       - "8095:8095"
     environment:
-      <<: *mysql-credentials
+      <<: [*mysql-credentials, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_media?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
       SANOS_MEDIA_UPLOAD_DIR: /data/uploads
     volumes:
@@ -149,7 +152,7 @@ services:
     ports:
       - "8096:8096"
     environment:
-      <<: [*mysql-credentials, *rabbit-credentials]
+      <<: [*mysql-credentials, *rabbit-credentials, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_matching?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
       PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
       REPORTS_SERVICE_URL: http://reports-service:8093
@@ -170,7 +173,7 @@ services:
     ports:
       - "8097:8097"
     environment:
-      <<: *mysql-credentials
+      <<: [*mysql-credentials, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_capacity?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
     depends_on:
       mysql:
@@ -185,7 +188,7 @@ services:
     ports:
       - "8098:8098"
     environment:
-      <<: [*mysql-credentials, *rabbit-credentials]
+      <<: [*mysql-credentials, *rabbit-credentials, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_audit?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
     depends_on:
       mysql:
@@ -202,7 +205,7 @@ services:
     ports:
       - "8099:8099"
     environment:
-      <<: *mysql-credentials
+      <<: [*mysql-credentials, *java-runtime-env]
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_foro?createDatabaseIfNotExist=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
     depends_on:
       mysql:
@@ -218,6 +221,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      <<: *java-runtime-env
       IAM_SERVICE_URL: http://iam-service:8091
       PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
       REPORTS_SERVICE_URL: http://reports-service:8093
@@ -256,7 +260,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      <<: *jwt-secret
+      <<: [*jwt-secret, *java-runtime-env]
       IAM_SERVICE_URL: http://iam-service:8091
       PET_CATALOG_SERVICE_URL: http://pet-catalog-service:8092
       REPORTS_SERVICE_URL: http://reports-service:8093

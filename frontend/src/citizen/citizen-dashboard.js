@@ -95,6 +95,29 @@
       if (event.target.closest("#btnRefresh")) {
         event.preventDefault();
         refreshForPage();
+        return;
+      }
+
+      const quickStatusBtn = event.target.closest(".js-report-quick-status");
+      if (quickStatusBtn) {
+        event.preventDefault();
+        const reportId = Number(quickStatusBtn.getAttribute("data-report-id"));
+        const nextStatus = quickStatusBtn.getAttribute("data-next-status");
+        if (Number.isFinite(reportId) && nextStatus) {
+          updateUserReportStatus(reportId, nextStatus);
+        }
+        return;
+      }
+
+      const applyStatusBtn = event.target.closest(".js-report-apply-status");
+      if (applyStatusBtn) {
+        event.preventDefault();
+        const reportId = Number(applyStatusBtn.getAttribute("data-report-id"));
+        const select = document.getElementById(`reportStatusSelect-${reportId}`);
+        const nextStatus = select ? String(select.value || "") : "";
+        if (Number.isFinite(reportId) && nextStatus) {
+          updateUserReportStatus(reportId, nextStatus);
+        }
       }
     });
   }
@@ -235,9 +258,7 @@
       throw new Error("Sesion expirada. Vuelve a iniciar sesion.");
     }
     const opts = { token };
-    const uid = userId();
     const paths = ["/api/iam/profile", "/api/iam/users/me"];
-    if (uid) paths.push(`/api/iam/users/${uid}`);
 
     let lastError = null;
     for (const path of paths) {
@@ -633,6 +654,63 @@
     return status || "—";
   }
 
+  function normalizeReportStatus(status) {
+    const s = String(status || "").toUpperCase();
+    if (s === "ABIERTO" || s === "OPEN") return "OPEN";
+    if (s === "RESUELTO" || s === "RESOLVED") return "RESOLVED";
+    if (s === "CERRADO" || s === "CLOSED") return "CLOSED";
+    return s || "OPEN";
+  }
+
+  function reportQuickAction(report) {
+    const status = normalizeReportStatus(report.status);
+    const type = String(report.type || "").toUpperCase();
+    if (status === "OPEN") {
+      const isLost = type === "LOST" || type === "PERDIDA";
+      return {
+        label: isLost ? "Marcar encontrado" : "Marcar cerrado",
+        status: isLost ? "RESOLVED" : "CLOSED"
+      };
+    }
+    if (status === "RESOLVED" || status === "CLOSED") {
+      return { label: "Reabrir", status: "OPEN" };
+    }
+    return null;
+  }
+
+  function renderReportActions(report) {
+    const reportId = Number(report.id);
+    if (!Number.isFinite(reportId) || reportId <= 0) return "—";
+
+    const current = normalizeReportStatus(report.status);
+    const quick = reportQuickAction(report);
+    const options = [
+      { value: "OPEN", label: "Abierto" },
+      { value: "RESOLVED", label: "Resuelto" },
+      { value: "CLOSED", label: "Cerrado" }
+    ];
+    const quickBtn = quick
+      ? `<button class="btn btn-secondary js-report-quick-status" type="button" data-report-id="${reportId}" data-next-status="${quick.status}">${core.escapeHtml(quick.label)}</button>`
+      : "";
+    const selectOptions = options
+      .map(
+        (opt) =>
+          `<option value="${opt.value}"${opt.value === current ? " selected" : ""}>${core.escapeHtml(opt.label)}</option>`
+      )
+      .join("");
+    return `
+      <div class="profile-report-actions">
+        ${quickBtn}
+        <div class="profile-report-actions__manual">
+          <select id="reportStatusSelect-${reportId}" class="profile-report-actions__select">
+            ${selectOptions}
+          </select>
+          <button class="btn btn-ghost js-report-apply-status" type="button" data-report-id="${reportId}">Guardar</button>
+        </div>
+      </div>
+    `;
+  }
+
   function reportTypeBadge(type) {
     const t = String(type || "").toUpperCase();
     const label = formatReportType(type);
@@ -710,9 +788,26 @@
           <td>${core.escapeHtml(report.healthStatus || "—")}</td>
           <td>${core.escapeHtml(core.formatDate(report.createdAt))}</td>
           <td>${core.escapeHtml(core.truncate(report.description || "—", 80))}</td>
+          <td>${renderReportActions(report)}</td>
         </tr>`;
       })
       .join("");
+  }
+
+  async function updateUserReportStatus(reportId, status) {
+    const normalized = normalizeReportStatus(status);
+    try {
+      setStatus("Actualizando estado del reporte…", false, true);
+      await core.api(`/api/reports/${reportId}/status`, {
+        method: "PATCH",
+        token: state.session.token,
+        body: { status: normalized }
+      });
+      await refreshProfileHistory({ quiet: true });
+      setStatus("Estado del reporte actualizado.");
+    } catch (error) {
+      setStatus(error.message, true);
+    }
   }
 
   function fillProfileForm(profile) {

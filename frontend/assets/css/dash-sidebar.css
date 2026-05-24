@@ -607,6 +607,34 @@
   color: var(--text-soft);
 }
 
+.profile-report-actions {
+  display: grid;
+  gap: 8px;
+  min-width: 210px;
+}
+
+.profile-report-actions__manual {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-report-actions__select {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  color: var(--text);
+  background: var(--surface-strong);
+}
+
+[data-theme="dark"] .profile-report-actions__select {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
 /* Foro ciudadano */
 .forum-page {
   max-width: 1080px;
