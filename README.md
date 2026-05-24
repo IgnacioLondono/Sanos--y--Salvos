@@ -1,337 +1,318 @@
 # Sanos y Salvos
 
-Plataforma distribuida para **registro, reporte y coincidencia** de mascotas perdidas y encontradas. Arquitectura de **microservicios** con API Gateway, BFF, mensajería **RabbitMQ**, frontend web por roles y persistencia **MySQL** (patrón *database per service*).
+Plataforma distribuida para **registro, reporte, geolocalización, coordinación comunitaria y coincidencia de mascotas** perdidas/encontradas.
+
+El proyecto está implementado con arquitectura de **microservicios Spring Boot**, **API Gateway**, **BFF**, **RabbitMQ**, **MySQL** y frontend web modular.
 
 ---
 
 ## Tabla de contenidos
 
-1. [Inicio rápido](#inicio-rápido)
-2. [Estructura del repositorio](#estructura-del-repositorio)
-3. [Arquitectura](#arquitectura)
-4. [Stack tecnológico](#stack-tecnológico)
-5. [Docker Compose](#docker-compose)
-6. [RabbitMQ (mensajería)](#rabbitmq-mensajería)
-7. [Frontend](#frontend)
-8. [API y Swagger](#api-y-swagger)
-9. [Credenciales de prueba](#credenciales-de-prueba)
-10. [Flujos de uso](#flujos-de-uso)
-11. [Endpoints por dominio](#endpoints-por-dominio)
-12. [Modelo de datos](#modelo-de-datos)
-13. [Desarrollo local](#desarrollo-local)
-14. [Scripts y utilidades](#scripts-y-utilidades)
-15. [Solución de problemas](#solución-de-problemas)
-16. [Documentación adicional](#documentación-adicional)
+1. [Resumen ejecutivo](#resumen-ejecutivo)
+2. [Inicio rápido](#inicio-rapido)
+3. [Arquitectura del sistema](#arquitectura-del-sistema)
+4. [Estructura del repositorio](#estructura-del-repositorio)
+5. [Microservicios y responsabilidades](#microservicios-y-responsabilidades)
+6. [Puertos, URLs y credenciales](#puertos-urls-y-credenciales)
+7. [Infraestructura Docker](#infraestructura-docker)
+8. [Mensajería RabbitMQ](#mensajeria-rabbitmq)
+9. [Frontend](#frontend)
+10. [API y Swagger](#api-y-swagger)
+11. [Modelo de datos](#modelo-de-datos)
+12. [Ejecución por escenarios](#ejecucion-por-escenarios)
+13. [Pruebas y calidad](#pruebas-y-calidad)
+14. [Scripts útiles](#scripts-utiles)
+15. [Operación diaria](#operacion-diaria)
+16. [Troubleshooting](#troubleshooting)
+17. [Roadmap técnico sugerido](#roadmap-tecnico-sugerido)
+18. [Documentación adicional](#documentacion-adicional)
 
 ---
 
-## Inicio rápido
+## Resumen ejecutivo
 
-**Requisitos:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) con Compose v2.
+- **Dominio:** mascotas perdidas/encontradas con trazabilidad y colaboración ciudadana.
+- **Patrón de persistencia:** `database-per-service` (`db_iam`, `db_pets`, `db_reports`, etc.).
+- **Entrada única:** `gateway` en `:8080`.
+- **Agregación de datos para UI:** `bff` en `:8081`.
+- **Asincronía académica:** evento `report.created` en RabbitMQ.
+- **Frontend:** vistas separadas por rol (ciudadano/admin) con navegación lateral y mapa.
+
+---
+
+## Inicio rapido
+
+### Requisitos
+
+- Docker Desktop + Compose v2.
+- Java 17 y Maven 3.9+ (solo para correr fuera de Docker).
+
+### Levantar todo
 
 ```bash
-# Desde la raíz del proyecto
 docker compose up --build -d
 ```
 
-O en Windows: doble clic en **`encender-todo.bat`**.
+En Windows también puedes usar:
 
-| Recurso | URL |
-|---------|-----|
-| **Aplicación web** | http://localhost:5173 |
-| **API Gateway** | http://localhost:8080 |
-| **Swagger unificado** | http://localhost:8080/swagger-ui/index.html |
-| **RabbitMQ Management** | http://localhost:15672 (`sanos` / `sanos_pwd`) |
-| **MySQL (host)** | `localhost:3307` — usuario `sanos`, contraseña `sanos_pwd` |
+- `encender-todo.bat`
 
-**Login de prueba:** `ciudadano@sanosysalvos.cl` / `Ciudadano#2026` — Admin: `admin@sanosysalvos.cl` / `Admin#Sanos2026`
+### Verificación rápida
+
+```bash
+docker compose ps
+docker compose logs -f gateway
+```
+
+---
+
+## Arquitectura del sistema
+
+```mermaid
+flowchart LR
+  FE[Frontend :5173] --> GW[Gateway :8080]
+  GW --> BFF[BFF :8081]
+  GW --> IAM[IAM :8091]
+  GW --> PET[Pet Catalog :8092]
+  GW --> REP[Reports :8093]
+  GW --> GEO[Geo :8094]
+  GW --> MED[Media :8095]
+  GW --> MAT[Matching :8096]
+  GW --> CAP[Capacity :8097]
+  GW --> AUD[Audit :8098]
+  GW --> FOR[Forum :8099]
+  BFF --> IAM
+  BFF --> PET
+  BFF --> REP
+  BFF --> GEO
+  BFF --> MED
+  BFF --> MAT
+  BFF --> CAP
+  BFF --> AUD
+  BFF --> FOR
+  REP -->|report.created| RMQ[RabbitMQ]
+  RMQ --> AUD
+  RMQ --> MAT
+  IAM --> DB[(MySQL)]
+  PET --> DB
+  REP --> DB
+  GEO --> DB
+  MED --> DB
+  MAT --> DB
+  CAP --> DB
+  AUD --> DB
+  FOR --> DB
+```
+
+### Principios aplicados
+
+- **Separación por dominio:** cada microservicio tiene contexto y datos propios.
+- **Resiliencia en frontend:** BFF entrega respuesta parcial si algún backend cae.
+- **Trazabilidad:** auditoría y eventos de negocio asíncronos.
+- **Escalabilidad:** componentes desacoplados vía HTTP + mensajería.
 
 ---
 
 ## Estructura del repositorio
 
-```
+```text
 Sanos--y--Salvos-main/
-├── docker-compose.yml      # Stack completo (MySQL, RabbitMQ, 9 MS, BFF, gateway, frontend)
-├── pom.xml                 # Agregador Maven (abrir raíz en IDE)
-├── encender-todo.bat       # Levanta Docker en Windows
-├── apagar-todo.bat         # Detiene contenedores
-├── db/
-│   ├── init.sql            # Crea db_* y permisos usuario sanos
-│   └── schema-foro.sql     # Referencia tablas foro (opcional con XAMPP)
-├── docs/
-│   ├── RABBITMQ.md         # Eventos report.created
-│   ├── XAMPP.md            # Desarrollo con Apache + MySQL local
-│   └── FORO-TC.md          # Especificación técnica del foro
-├── services/               # 9 microservicios Spring Boot (8091–8099)
+├── bff/
+├── gateway/
+├── services/
 │   ├── iam-service/
 │   ├── pet-catalog-service/
-│   ├── reports-service/    # Publica eventos RabbitMQ
+│   ├── reports-service/
 │   ├── geo-intelligence-service/
 │   ├── media-service/
-│   ├── matching-service/   # Consumidor RabbitMQ
+│   ├── matching-service/
 │   ├── capacity-service/
-│   ├── audit-service/      # Consumidor RabbitMQ
+│   ├── audit-service/
 │   └── forum-service/
-├── gateway/                # JWT, CORS, proxy, Swagger agregado (:8080)
-├── bff/                    # Agregación para dashboards (:8081)
-├── frontend/               # HTML + JS (ver frontend/README.md)
-├── scripts/                # run-xampp.ps1, fix-docker-mysql.ps1, etc.
-└── uploads/                # Archivos media (local sin Docker)
+├── frontend/
+├── db/
+├── docs/
+├── scripts/
+├── docker-compose.yml
+├── pom.xml
+├── encender-todo.bat
+└── apagar-todo.bat
 ```
 
----
+### Carpetas clave
 
-## Arquitectura
-
-### Vista general
-
-```mermaid
-flowchart TB
-  subgraph cliente [Cliente]
-    FE[Frontend :5173]
-  end
-  subgraph edge [Capa de exposición]
-    GW[Gateway :8080]
-    BFF[BFF :8081]
-  end
-  subgraph ms [Microservicios]
-    IAM[IAM :8091]
-    PET[Mascotas :8092]
-    REP[Reportes :8093]
-    GEO[Geo :8094]
-    MED[Media :8095]
-    MAT[Matching :8096]
-    CAP[Capacity :8097]
-    AUD[Auditoría :8098]
-    FOR[Foro :8099]
-  end
-  subgraph infra [Infraestructura]
-    MY[(MySQL :3307)]
-    RMQ[RabbitMQ :5672 / :15672]
-  end
-  FE --> GW
-  GW --> BFF
-  GW --> IAM & PET & REP & GEO & MED & MAT & CAP & AUD & FOR
-  BFF --> IAM & PET & REP & GEO & MED & MAT & CAP & AUD & FOR
-  IAM & PET & REP & GEO & MED & MAT & CAP & AUD & FOR --> MY
-  REP -->|report.created| RMQ
-  RMQ --> AUD & MAT
-```
-
-### Principios de diseño
-
-| Principio | Implementación |
-|-----------|----------------|
-| **Database per service** | Cada microservicio usa su esquema `db_*` (ver `db/init.sql`) |
-| **API Gateway** | Punto único de entrada, validación JWT, rate limiting básico |
-| **BFF** | Agregación resiliente para dashboard ciudadano/admin y mapa |
-| **Mensajería asíncrona** | Al crear reporte → RabbitMQ → auditoría + matching |
-| **Seguridad** | BCrypt en IAM; JWT HMAC-SHA (32+ caracteres) compartido IAM ↔ Gateway |
-| **Documentación** | OpenAPI 3 en cada servicio; Swagger unificado en el gateway |
-| **Datos de ejemplo** | *Seeding* al primer arranque en varios dominios |
+- `services/`: microservicios Java.
+- `frontend/`: HTML/CSS/JS modular.
+- `db/`: SQL de bootstrap y esquema de foro.
+- `docs/`: documentación técnica específica.
+- `scripts/`: automatizaciones de ejecución local y soporte.
 
 ---
 
-## Stack tecnológico
+## Microservicios y responsabilidades
 
-| Capa | Tecnología |
-|------|------------|
-| Backend | Java 17, Spring Boot 3.3, Spring Data JPA |
-| Mensajería | RabbitMQ 3.13, Spring AMQP |
-| API | REST, Springdoc OpenAPI |
-| Gateway / BFF | Spring Web, WebClient |
-| Base de datos | MySQL 8.4 |
-| Frontend | HTML5, CSS, JavaScript (vanilla), Leaflet + OpenStreetMap |
-| Contenedores | Docker, Docker Compose, nginx (frontend) |
+| Servicio | Puerto | Responsabilidad |
+|---|---:|---|
+| `iam-service` | 8091 | Registro, login, JWT, perfil y roles |
+| `pet-catalog-service` | 8092 | Alta y consulta de mascotas |
+| `reports-service` | 8093 | Reportes de pérdida/hallazgo + publicación evento |
+| `geo-intelligence-service` | 8094 | Zonas de riesgo y coordenadas |
+| `media-service` | 8095 | Evidencias fotográficas y metadatos |
+| `matching-service` | 8096 | Motor de coincidencias |
+| `capacity-service` | 8097 | Equipos, horas y capacidad de respuesta |
+| `audit-service` | 8098 | Logs de auditoría y consumo de eventos |
+| `forum-service` | 8099 | Hilos y respuestas comunitarias |
+| `bff` | 8081 | Agregación para dashboard/mapa |
+| `gateway` | 8080 | API edge, seguridad y Swagger unificado |
 
 ---
 
-## Docker Compose
+## Puertos, URLs y credenciales
 
-El archivo `docker-compose.yml` define **15 servicios** en la red `sanos_net`.
+### URLs principales
 
-### Infraestructura
+| Recurso | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Gateway | http://localhost:8080 |
+| BFF | http://localhost:8081 |
+| Swagger unificado | http://localhost:8080/swagger-ui/index.html |
+| RabbitMQ UI | http://localhost:15672 |
+| MySQL host | `localhost:3307` |
 
-| Servicio | Contenedor | Puerto host | Notas |
-|----------|------------|-------------|--------|
-| `mysql` | `sanos-mysql` | **3307** → 3306 | Volumen `sanos_mysql_data`; init `db/init.sql` |
-| `rabbitmq` | `sanos-rabbitmq` | **5672**, **15672** | Usuario `sanos` / `sanos_pwd` |
+### Credenciales de prueba
 
-### Microservicios y capas
+| Tipo | Usuario | Password |
+|---|---|---|
+| Admin | `admin@sanosysalvos.cl` | `Admin#Sanos2026` |
+| Ciudadano | `ciudadano@sanosysalvos.cl` | `Ciudadano#2026` |
+| RabbitMQ | `sanos` | `sanos_pwd` |
+| MySQL | `sanos` | `sanos_pwd` |
 
-| Servicio Compose | Puerto | Base de datos | RabbitMQ |
-|------------------|--------|---------------|----------|
-| `iam-service` | 8091 | `db_iam` | — |
-| `pet-catalog-service` | 8092 | `db_pets` | — |
-| `reports-service` | 8093 | `db_reports` | **Productor** |
-| `geo-intelligence-service` | 8094 | `db_geo` | — |
-| `media-service` | 8095 | `db_media` | Volumen `sanos_media_uploads` |
-| `matching-service` | 8096 | `db_matching` | **Consumidor** |
-| `capacity-service` | 8097 | `db_capacity` | — |
-| `audit-service` | 8098 | `db_audit` | **Consumidor** |
-| `forum-service` | 8099 | `db_foro` | — |
-| `bff` | 8081 | — | — |
-| `gateway` | 8080 | — | — |
-| `frontend` | 5173 → 80 | — | nginx + redirecciones `/citizen-*.html` |
+---
 
-### Comandos útiles
+## Infraestructura Docker
+
+`docker-compose.yml` levanta:
+
+- `mysql` con volumen persistente `sanos_mysql_data`.
+- `rabbitmq` con panel de administración.
+- 9 microservicios + `bff` + `gateway` + `frontend`.
+- volumen `sanos_media_uploads` para archivos de media.
+
+### Comandos frecuentes
 
 ```bash
-# Levantar / reconstruir
 docker compose up --build -d
-
-# Ver estado
 docker compose ps
-
-# Logs (todos o uno)
 docker compose logs -f
 docker compose logs -f reports-service
-
-# Detener y eliminar contenedores (conserva volúmenes)
 docker compose down
-
-# Detener y borrar volúmenes (reset total de BD y uploads)
 docker compose down -v
 ```
 
-### Variables de entorno relevantes
+### Variables relevantes
 
-| Variable | Dónde | Descripción |
-|----------|-------|-------------|
-| `SPRING_DATASOURCE_URL` | Cada MS | JDBC a `mysql:3306/db_*` dentro de la red Docker |
-| `SPRING_RABBITMQ_*` | reports, audit, matching | Conexión al broker `rabbitmq` |
-| `SANOS_MESSAGING_ENABLED` | reports | `false` desactiva publicación si no hay RabbitMQ |
-| `SANOS_JWT_SECRET` | iam, gateway | Misma clave en ambos (mín. 32 caracteres) |
-| `SANOS_MEDIA_UPLOAD_DIR` | media | `/data/uploads` en contenedor (volumen persistente) |
-
-Copia `.env.example` si necesitas documentar variables para desarrollo híbrido (MySQL en host).
+| Variable | Uso |
+|---|---|
+| `SPRING_DATASOURCE_URL` | conexión MySQL por servicio |
+| `SPRING_RABBITMQ_HOST` | broker en Docker (`rabbitmq`) |
+| `SPRING_RABBITMQ_USERNAME` / `PASSWORD` | autenticación AMQP |
+| `SANOS_MESSAGING_ENABLED` | habilita publicación asíncrona en reports |
+| `SANOS_JWT_SECRET` | clave compartida IAM/Gateway |
+| `SANOS_MEDIA_UPLOAD_DIR` | ruta de almacenamiento en media-service |
 
 ---
 
-## RabbitMQ (mensajería)
+## Mensajeria RabbitMQ
 
-Flujo académico implementado:
+### Evento de negocio implementado
 
-1. **POST** crear reporte → `reports-service` persiste en `db_reports`.
-2. Publica evento **`report.created`** en exchange `sanos.events`.
-3. **`audit-service`** escribe en `log_auditoria` (`CREATE_ASYNC`).
-4. **`matching-service`** recibe el evento para el motor de coincidencias.
+- **Exchange:** `sanos.events` (topic)
+- **Routing key:** `report.created`
+- **Productor:** `reports-service`
+- **Consumidores:** `audit-service`, `matching-service`
 
-Detalle de colas, routing keys y demo para el profesor: **[docs/RABBITMQ.md](docs/RABBITMQ.md)**.
+### Flujo
+
+1. Se crea reporte en `reports-service`.
+2. Se publica `ReportCreatedEvent`.
+3. `audit-service` persiste log `CREATE_ASYNC`.
+4. `matching-service` recibe trigger para procesar coincidencias.
+
+Ver detalle técnico y demo: `docs/RABBITMQ.md`.
 
 ---
 
 ## Frontend
 
-Estructura modular bajo `frontend/` (detalle en **[frontend/README.md](frontend/README.md)**):
+Estructura principal:
 
-```
+```text
 frontend/
-├── index.html, register.html
-├── pages/citizen/     # Panel ciudadano
-├── pages/admin/       # Panel administrador
-├── assets/css/, assets/images/
+├── index.html
+├── register.html
+├── pages/
+│   ├── citizen/
+│   └── admin/
+├── assets/
+│   ├── css/
+│   └── images/
 └── src/
-    ├── core/          # paths.js, config.js, shared.js
-    ├── auth/, citizen/, admin/, layout/, ui/, profile/
+    ├── core/
+    ├── auth/
+    ├── citizen/
+    ├── admin/
+    ├── layout/
+    ├── profile/
+    └── ui/
 ```
 
-| Pantalla | Ruta (Docker) |
-|----------|----------------|
-| Login | `/index.html` |
-| Registro | `/register.html` |
-| Reporte con mapa | `/pages/citizen/citizen-reporte.html` |
-| Foro | `/pages/citizen/citizen-foro.html` (alias `/citizen-foro.html`) |
-| Perfil ciudadano | `/pages/citizen/citizen-perfil.html` |
-| Resumen admin | `/pages/admin/admin-resumen.html` |
+### Rutas destacadas
 
-El frontend llama al **gateway** (`http://localhost:8080` en Docker). Leaflet usa CDN (`unpkg.com`) y tiles de OpenStreetMap.
+- `/index.html`
+- `/register.html`
+- `/pages/citizen/citizen-reporte.html`
+- `/pages/citizen/citizen-foro.html`
+- `/pages/admin/admin-resumen.html`
+
+`frontend/nginx.conf` mantiene redirecciones cortas de compatibilidad (`/citizen-*.html` y `/admin-*.html`).
 
 ---
 
 ## API y Swagger
 
-**Recomendado:** Swagger unificado en el gateway.
+### Swagger recomendado (gateway)
 
-- URL: http://localhost:8080/swagger-ui/index.html
-- Selector superior para cambiar entre APIs (IAM, mascotas, reportes, …, BFF, foro).
-- Rutas internas de documentación: `/openapi/{servicio}/v3/api-docs`
-- Autenticación: `POST /api/iam/login` → copiar token → **Authorize** (Bearer JWT).
+- `http://localhost:8080/swagger-ui/index.html`
 
-**Swagger directo por puerto** (sin gateway): `http://localhost:8091/swagger-ui/index.html` (IAM), `8092` (mascotas), … `8099` (foro), `8081` (BFF).
+### Swagger por servicio
 
-Cada controlador usa anotaciones OpenAPI (`@Tag`, `@Operation`); entidades y DTOs incluyen `@Schema` con mapeo a tablas SQL.
+- IAM: `:8091`
+- Pets: `:8092`
+- Reports: `:8093`
+- Geo: `:8094`
+- Media: `:8095`
+- Matching: `:8096`
+- Capacity: `:8097`
+- Audit: `:8098`
+- Forum: `:8099`
+- BFF: `:8081`
 
----
+### Autenticación
 
-## Credenciales de prueba
-
-| Rol | Email | Contraseña |
-|-----|-------|------------|
-| Administrador | `admin@sanosysalvos.cl` | `Admin#Sanos2026` |
-| Ciudadano | `ciudadano@sanosysalvos.cl` | `Ciudadano#2026` |
-
-MySQL (Docker): usuario **`sanos`**, contraseña **`sanos_pwd`**, puerto host **3307**.
-
----
-
-## Flujos de uso
-
-### Ciudadano
-
-1. Registrarse en `register.html` o `POST /api/iam/register`.
-2. Iniciar sesión → JWT con rol `CIUDADANO`.
-3. Registrar mascota y crear **reporte** (mapa + foto opcional).
-4. El reporte dispara evento RabbitMQ (auditoría asíncrona).
-5. Consultar foro, perfil y actividad desde el panel lateral.
-
-### Administrador
-
-1. Login con cuenta admin → dashboard en `pages/admin/`.
-2. Revisar salud de microservicios, KPIs, usuarios IAM, reportes, capacity.
-3. Mapa de zonas de riesgo (geo), matching y **logs de auditoría** (incluye entradas `CREATE_ASYNC` vía RabbitMQ).
-4. Ejecutar motor de coincidencias: `POST /api/matching/run`.
-
-### Autenticación API
-
-Enviar en todas las rutas protegidas:
-
-```http
-Authorization: Bearer <token>
-```
-
-Excepciones públicas: `/api/*/health`, login y registro.
-
----
-
-## Endpoints por dominio
-
-Prefijo común vía gateway: `http://localhost:8080`
-
-| Dominio | Rutas principales |
-|---------|-------------------|
-| **IAM** | `POST /api/iam/register`, `POST /api/iam/login`, `GET /api/iam/users` |
-| **Mascotas** | `GET/POST /api/pets`, `GET /api/pets/{id}`, `GET /api/pets/owner/{ownerId}` |
-| **Reportes** | `GET/POST /api/reports`, `PATCH /api/reports/{id}/status`, `GET /api/reports/pet/{petId}` |
-| **Geo** | `GET/POST /api/zones`, `GET /api/zones/risk-summary` |
-| **Media** | `GET/POST /api/media`, `GET /api/media/pet/{petId}` |
-| **Matching** | `GET /api/matching`, `POST /api/matching/run` |
-| **Capacity** | `GET/POST /api/capacity`, `GET /api/capacity/summary` |
-| **Auditoría** | `GET /api/audit`, `GET /api/audit/entity/{entity}` |
-| **Foro** | `GET/POST /api/forum/threads`, `POST /api/forum/threads/{id}/posts` |
-| **BFF** | `GET /api/bff/dashboard`, `GET /api/bff/map`, `GET /api/bff/pet-overview/{petId}` |
-
-Todos los servicios exponen `GET /api/<dominio>/health` para el panel de estado del admin.
+1. `POST /api/iam/login`
+2. Copiar token JWT
+3. Usar `Authorization: Bearer <token>`
 
 ---
 
 ## Modelo de datos
 
-Patrón **3FN**, **19 tablas** repartidas en **9 bases** `db_*`:
+Se aplica 3FN con esquema por dominio:
 
-| Base | Tablas (dominio) |
-|------|------------------|
+| Base | Tablas principales |
+|---|---|
 | `db_iam` | `usuarios`, `credenciales`, `contactos_usuario` |
 | `db_pets` | `mascotas`, `caracteristicas_fisicas`, `vinculos_mascotas` |
 | `db_reports` | `reportes_eventos`, `detalles_reporte` |
@@ -342,87 +323,143 @@ Patrón **3FN**, **19 tablas** repartidas en **9 bases** `db_*`:
 | `db_audit` | `log_auditoria`, `notificaciones_sistema` |
 | `db_foro` | `hilos_foro`, `mensajes_foro` |
 
-Hibernate (`ddl-auto: update`) crea y actualiza tablas al arrancar cada servicio. Script de inicialización: **`db/init.sql`**.
+`db/init.sql` crea bases/permisos y Hibernate (`ddl-auto=update`) completa tablas.
 
 ---
 
-## Desarrollo local
+## Ejecucion por escenarios
 
-### Opción A — Solo infra en Docker, apps en IDE
+### Escenario A: Todo en Docker
+
+```bash
+docker compose up --build -d
+```
+
+### Escenario B: Infra en Docker + servicios en IDE
 
 ```bash
 docker compose up mysql rabbitmq -d
 ```
 
-Importar **`pom.xml` raíz** en IntelliJ / VS Code y ejecutar cada `*Application` (puertos 8091–8099, BFF 8081, gateway 8080). Ver `.vscode/launch.json`.
+Luego ejecutar `*Application` desde IDE.
 
-Variables locales típicas:
+### Escenario C: XAMPP local
 
-- MySQL: `localhost:3307` (Docker) o `3306` (XAMPP)
-- RabbitMQ: `localhost:5672`, usuario `sanos`
-
-### Opción B — XAMPP
-
-Guía paso a paso: **[docs/XAMPP.md](docs/XAMPP.md)**
+Ver `docs/XAMPP.md` y script:
 
 ```powershell
 .\scripts\run-xampp.ps1 -Service forum
 ```
 
-Frontend estático:
+---
+
+## Pruebas y calidad
+
+El proyecto incluye pruebas unitarias en varios módulos (gateway, bff, iam, reports, forum, pet-catalog, geo, media, matching, audit y capacity).
+
+### Ejecutar todo
 
 ```bash
-npx http-server frontend -p 5173
+mvn test -DskipITs
 ```
 
-### Opción C — Stack completo Docker
-
-Ver [Inicio rápido](#inicio-rápido) y [Docker Compose](#docker-compose).
-
----
-
-## Scripts y utilidades
-
-| Script | Función |
-|--------|---------|
-| `encender-todo.bat` | `docker compose up --build -d` + resumen de URLs |
-| `apagar-todo.bat` | `docker compose down` |
-| `scripts/run-xampp.ps1` | Arranca un microservicio contra MySQL XAMPP |
-| `scripts/fix-docker-mysql.ps1` | Repara permisos `db_foro` en volúmenes MySQL antiguos |
-
-Compilar todos los módulos desde la raíz:
+### Ejecutar por módulo
 
 ```bash
-mvn clean install -DskipTests
+mvn -pl services/iam-service test
+mvn -pl services/reports-service test
+mvn -pl services/forum-service test
+mvn -pl services/capacity-service test
+mvn -pl services/matching-service,services/media-service,services/audit-service,services/geo-intelligence-service test
+```
+
+### Objetivo académico sugerido
+
+- Mantener pruebas verdes en CI local antes de commit.
+- Aumentar cobertura útil en capas `service` y `controller`.
+- Añadir JaCoCo si se requiere porcentaje formal de cobertura.
+
+---
+
+## Scripts utiles
+
+| Script | Propósito |
+|---|---|
+| `encender-todo.bat` | levanta stack completo y muestra endpoints |
+| `apagar-todo.bat` | detiene stack Docker |
+| `arrancar-foro.bat` | arranque rápido de foro |
+| `scripts/run-xampp.ps1` | ejecutar servicios contra XAMPP |
+| `scripts/fix-docker-mysql.ps1` | corregir grants/permisos de MySQL |
+
+---
+
+## Operacion diaria
+
+### Logs y diagnóstico
+
+```bash
+docker compose logs -f gateway
+docker compose logs -f reports-service audit-service matching-service
+docker compose logs -f forum-service
+```
+
+### Reinicio parcial
+
+```bash
+docker compose restart reports-service
+docker compose restart forum-service
+```
+
+### Estado de contenedores
+
+```bash
+docker compose ps
 ```
 
 ---
 
-## Solución de problemas
+## Troubleshooting
 
-| Síntoma | Qué revisar |
-|---------|-------------|
-| Mapa en blanco | Acceso a `unpkg.com` y `tile.openstreetmap.org` |
-| `Access denied` a `db_foro` | Ejecutar `scripts/fix-docker-mysql.ps1` y reiniciar `forum-service` |
-| Puerto 8099 ocupado | No ejecutar foro en IDE si Docker ya lo usa |
-| JWT inválido | Mismo `SANOS_JWT_SECRET` en IAM y gateway |
-| RabbitMQ sin mensajes | Que `audit-service` y `matching-service` estén arriba; revisar http://localhost:15672 |
-| BFF con servicios DOWN | El BFF devuelve datos parciales; revisar `docker compose logs` del MS afectado |
-| Datos corruptos / permisos viejos | `docker compose down -v` (borra volúmenes) y volver a `up --build` |
+| Problema | Acción recomendada |
+|---|---|
+| No inicia `forum-service` por permisos | ejecutar `scripts/fix-docker-mysql.ps1` |
+| Error JWT en gateway | revisar `SANOS_JWT_SECRET` en IAM y gateway |
+| No aparecen mensajes RabbitMQ | verificar `reports`, `audit`, `matching` y cola en `:15672` |
+| Puerto ocupado (8099, 8094, etc.) | detener proceso o contenedor previo |
+| Front no resuelve rutas cortas | validar `frontend/nginx.conf` y rebuild frontend |
+| Datos inconsistentes | `docker compose down -v` y levantar de nuevo |
+| Tests no aparecen en un módulo | refrescar Test Explorer y correr `mvn -pl <modulo> test` |
 
 ---
 
-## Documentación adicional
+## Roadmap tecnico sugerido
+
+- Integrar JaCoCo con reporte agregado por reactor Maven.
+- Añadir pruebas de contrato API (MockMvc) por microservicio.
+- Añadir pruebas de integración con Testcontainers para MySQL y RabbitMQ.
+- Definir perfil `ci` con checks de formato/lint/test.
+- Incorporar healthchecks funcionales de negocio en BFF admin dashboard.
+
+---
+
+## Documentacion adicional
 
 | Documento | Contenido |
-|-----------|-----------|
-| [docs/RABBITMQ.md](docs/RABBITMQ.md) | Topología, colas, demo académica |
-| [docs/XAMPP.md](docs/XAMPP.md) | phpMyAdmin, puertos, Maven local |
-| [docs/FORO-TC.md](docs/FORO-TC.md) | Casos de uso y API del foro |
-| [frontend/README.md](frontend/README.md) | Carpetas, rutas y scripts por página |
+|---|---|
+| `docs/RABBITMQ.md` | topología de eventos y validación demo |
+| `docs/XAMPP.md` | guía de ejecución local con Apache/MySQL |
+| `docs/FORO-TC.md` | especificación técnica del módulo foro |
+| `frontend/README.md` | estructura frontend, rutas y carga de scripts |
 
 ---
 
-## Licencia y autoría
+## Nota final
 
-Proyecto académico — arquitectura de microservicios según informe del curso. Para contribuir o desplegar en otro entorno, adaptar `docker-compose.yml` y secretos (`SANOS_JWT_SECRET`, contraseñas MySQL/RabbitMQ) antes de producción.
+Proyecto académico con foco en arquitectura distribuida y trazabilidad.
+
+Para uso fuera de entorno local, antes de producción debes:
+
+- mover secretos a un gestor seguro,
+- endurecer CORS y autenticación,
+- configurar observabilidad centralizada,
+- y separar configuración por ambiente (`dev`, `staging`, `prod`).
