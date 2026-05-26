@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="../../assets/css/styles.css" />
   <link rel="stylesheet" href="../../assets/css/styles-enhanced.css" />
   <link rel="stylesheet" href="../../assets/css/dash-sidebar.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script>
     (function () {
       try {
@@ -34,16 +33,16 @@
           <img class="dash-brand__logo" src="../../assets/images/logo.png" alt="" width="46" height="46" />
           <div class="dash-brand__text">
             <span class="dash-brand__kicker">Sanos y salvos</span>
-            <strong class="dash-brand__title">Admin</strong>
+            <strong class="dash-brand__title">Administrador</strong>
           </div>
         </a>
         <nav class="dash-nav" aria-label="Admin">
           <a class="sidebar-link dash-nav__link" href="admin-resumen.html"><i data-lucide="activity" class="sidebar-link-icon" aria-hidden="true"></i>Resumen</a>
           <a class="sidebar-link dash-nav__link" href="admin-usuarios.html"><i data-lucide="users" class="sidebar-link-icon" aria-hidden="true"></i>Usuarios</a>
           <a class="sidebar-link dash-nav__link" href="admin-reportes.html"><i data-lucide="file-text" class="sidebar-link-icon" aria-hidden="true"></i>Reportes</a>
-          <a class="sidebar-link dash-nav__link" href="admin-capacity.html"><i data-lucide="users-round" class="sidebar-link-icon" aria-hidden="true"></i>Capacity</a>
+          <a class="sidebar-link dash-nav__link" href="admin-capacity.html"><i data-lucide="users-round" class="sidebar-link-icon" aria-hidden="true"></i>Capacidad</a>
           <a class="sidebar-link dash-nav__link" href="admin-mapa.html"><i data-lucide="map" class="sidebar-link-icon" aria-hidden="true"></i>Mapa</a>
-          <a class="sidebar-link dash-nav__link" href="admin-matching.html"><i data-lucide="sparkles" class="sidebar-link-icon" aria-hidden="true"></i>Matching</a>
+          <a class="sidebar-link dash-nav__link" href="admin-matching.html"><i data-lucide="sparkles" class="sidebar-link-icon" aria-hidden="true"></i>Coincidencias</a>
           <a class="sidebar-link dash-nav__link" href="admin-auditoria.html"><i data-lucide="scroll-text" class="sidebar-link-icon" aria-hidden="true"></i>Auditoria</a>
         </nav>
         <div class="dash-header-end">
@@ -86,15 +85,24 @@
         <div class="table-wrap dash-table-below-map">
           <table class="data-table" id="zonesTable"></table>
         </div>
+        <div class="table-wrap dash-table-below-map" style="margin-top:14px;">
+          <div class="section-head-min" style="margin-bottom:10px;">
+            <div class="section-head-min__title">
+              <i data-lucide="file-text" aria-hidden="true"></i>
+              <h3 style="margin:0;">Reportes en el mapa</h3>
+            </div>
+          </div>
+          <table class="data-table" id="reportsTable"></table>
+        </div>
       </section>
     </main>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <script src="../../src/core/paths.js"></script>
   <script src="../../src/core/config.js"></script>
   <script src="../../src/core/shared.js"></script>
+  <script src="../../src/core/google-maps.js"></script>
   <script src="../../src/ui/theme-ui.js"></script>
   <script src="../../src/layout/dash-layout.js"></script>
   <script src="../../src/admin/admin-dashboard.js"></script>

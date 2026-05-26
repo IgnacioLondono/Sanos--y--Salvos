@@ -28,7 +28,7 @@ docker compose logs -f gateway
 
 Puerto por defecto: `8080`
 
-## Endpoints utiles
+## Endpoints útiles
 
-- Health: `/actuator/health`
+- Salud: `/actuator/health`
 - Swagger UI unificado: `/swagger-ui/index.html`

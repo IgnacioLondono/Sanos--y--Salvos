@@ -12,10 +12,8 @@
     dashboard: null,
     lastReportId: null,
     profileHistoryLoaded: false,
-    map: null,
-    mapMode: null,
-    markerLayer: null,
-    pickMarker: null
+    mapCtrl: null,
+    mapMode: null
   };
 
   const els = {
@@ -141,14 +139,12 @@
       }
       applyMapPick();
       syncCoordsHint();
-      requestAnimationFrame(() => initReportPickMap());
-      refreshReporte();
+      initReportPickMap().then(() => refreshReporte());
       return;
     }
 
     if (page === "mapa") {
-      initMap();
-      refreshMapa();
+      initMap().then(() => refreshMapa());
       return;
     }
 
@@ -372,26 +368,15 @@
   }
 
   function showPickMarker(lat, lng, panMap) {
-    if (!state.map || typeof L === "undefined") return;
-    if (state.pickMarker) {
-      state.pickMarker.setLatLng([lat, lng]);
-    } else {
-      state.pickMarker = L.circleMarker([lat, lng], {
-        radius: 10,
-        color: "#f59e0b",
-        fillColor: "#fbbf24",
-        fillOpacity: 0.9,
-        weight: 2
-      }).addTo(state.map);
-    }
-    state.pickMarker
-      .bindPopup(
-        `<strong>Ubicación del reporte</strong><br/>Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}`
-      )
-      .openPopup();
-    if (panMap) {
-      state.map.setView([lat, lng], Math.max(state.map.getZoom(), 14));
-    }
+    if (!state.mapCtrl) return;
+    state.mapCtrl.setPickMarker(lat, lng, {
+      color: "#f59e0b",
+      scale: 10,
+      popupHtml: core.buildMapPickPopup("Ubicación del reporte", [
+        `Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}`
+      ]),
+      pan: panMap
+    });
   }
 
   function restorePickMarkerFromInputs() {
@@ -403,23 +388,27 @@
     }
   }
 
-  function initReportPickMap() {
-    if (typeof L === "undefined") return;
-    const container = document.getElementById("reportPickMap");
-    if (!container) return;
+  function destroyMapCtrl() {
+    if (state.mapCtrl) {
+      state.mapCtrl.destroy();
+      state.mapCtrl = null;
+    }
+    state.mapMode = null;
+  }
 
-    if (state.map && state.mapMode === "report-pick") {
-      requestAnimationFrame(() => state.map.invalidateSize());
-      restorePickMarkerFromInputs();
+  async function initReportPickMap() {
+    const container = document.getElementById("reportPickMap");
+    if (!container || !window.SANOS_MAPS) return;
+
+    if (state.mapCtrl && state.mapMode === "report-pick") {
+      requestAnimationFrame(() => {
+        state.mapCtrl.invalidateSize();
+        restorePickMarkerFromInputs();
+      });
       return;
     }
 
-    if (state.map) {
-      state.map.remove();
-      state.map = null;
-      state.markerLayer = null;
-      state.pickMarker = null;
-    }
+    destroyMapCtrl();
 
     const settings = core.loadSettings();
     const center = settings.defaultCenter || { lat: -33.4489, lng: -70.6693 };
@@ -434,80 +423,61 @@
       }
     }
 
-    state.map = L.map(container).setView([startLat, startLng], 13);
-    state.mapMode = "report-pick";
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap"
-    }).addTo(state.map);
-    state.markerLayer = L.layerGroup().addTo(state.map);
-    state.pickMarker = null;
-
-    state.map.on("click", (event) => {
-      const { lat, lng } = event.latlng;
-      setReportCoords(lat, lng, false);
-    });
-
-    requestAnimationFrame(() => {
-      state.map.invalidateSize();
+    try {
+      state.mapCtrl = await window.SANOS_MAPS.createMap(container, {
+        center: { lat: startLat, lng: startLng },
+        zoom: 13,
+        onClick: ({ lat, lng }) => setReportCoords(lat, lng, false)
+      });
+      state.mapMode = "report-pick";
       restorePickMarkerFromInputs();
-    });
+    } catch (err) {
+      setStatus(err.message || "Mapa no disponible", true);
+    }
   }
 
-  function initMap() {
-    if (typeof L === "undefined") return;
+  async function initMap() {
     const container = document.getElementById("citizenMap");
-    if (!container) return;
+    if (!container || !window.SANOS_MAPS) return;
 
-    if (state.map && state.mapMode === "community") {
-      requestAnimationFrame(() => state.map.invalidateSize());
+    if (state.mapCtrl && state.mapMode === "community") {
+      requestAnimationFrame(() => state.mapCtrl.invalidateSize());
       return;
     }
 
-    if (state.map) {
-      state.map.remove();
-      state.map = null;
-      state.markerLayer = null;
-      state.pickMarker = null;
-    }
+    destroyMapCtrl();
 
     const settings = core.loadSettings();
     const center = settings.defaultCenter || { lat: -33.4489, lng: -70.6693 };
-    state.map = L.map(container).setView([center.lat, center.lng], 12);
-    state.mapMode = "community";
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap"
-    }).addTo(state.map);
-    state.markerLayer = L.layerGroup().addTo(state.map);
-
-    state.map.on("click", (event) => {
-      const { lat, lng } = event.latlng;
-      saveMapPick(lat, lng);
-      setStatus(`Coordenadas guardadas (${lat.toFixed(5)}, ${lng.toFixed(5)}). Úsalas en Hacer reporte.`);
-      if (state.pickMarker) {
-        state.pickMarker.setLatLng([lat, lng]);
-      } else {
-        state.pickMarker = L.circleMarker([lat, lng], {
-          radius: 9,
-          color: "#f59e0b",
-          fillColor: "#fbbf24",
-          fillOpacity: 0.85
-        }).addTo(state.map);
-      }
-      state.pickMarker
-        .bindPopup(
-          "Coordenadas guardadas.<br/>" +
-            `Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}<br/>` +
-            "<small>Se aplican al publicar en <strong>Hacer reporte</strong>.</small>"
-        )
-        .openPopup();
-    });
+    try {
+      state.mapCtrl = await window.SANOS_MAPS.createMap(container, {
+        center,
+        zoom: 12,
+        onClick: ({ lat, lng }) => {
+          saveMapPick(lat, lng);
+          setStatus(
+            `Coordenadas guardadas (${lat.toFixed(5)}, ${lng.toFixed(5)}). Úsalas en Hacer reporte.`
+          );
+          state.mapCtrl.setPickMarker(lat, lng, {
+            color: "#f59e0b",
+            scale: 9,
+            popupHtml: core.buildMapPickPopup("Coordenadas guardadas", [
+              `Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}`,
+              "Se aplican al publicar en Hacer reporte."
+            ]),
+            pan: false
+          });
+        }
+      });
+      state.mapMode = "community";
+    } catch (err) {
+      setStatus(err.message || "Mapa no disponible", true);
+    }
   }
 
   function renderReportsOnMap() {
-    if (!state.map || !state.markerLayer) return;
-    state.markerLayer.clearLayers();
+    if (!state.mapCtrl) return;
+    state.mapCtrl.clearMarkers();
     const bounds = [];
     const mediaIndex = core.indexMediaByReportAndPet(state.media);
 
@@ -518,26 +488,20 @@
       if (Number.isNaN(lat) || Number.isNaN(lng)) return;
       const isLost = String(report.type || "").toUpperCase() === "LOST";
       const color = isLost ? "#c0392b" : "#3d8f73";
-      const marker = L.circleMarker([lat, lng], {
-        radius: 8,
-        color,
-        fillColor: color,
-        fillOpacity: 0.75
-      });
       const petName = report.petId ? core.petNameById(report.petId, state.pets) : "";
-      marker.bindPopup(
-        core.buildMapReportPopup(report, {
+      state.mapCtrl.addMarker(lat, lng, {
+        color,
+        scale: 8,
+        popupHtml: core.buildMapReportPopup(report, {
           petName,
           imageUrl: mediaIndex.imageForReport(report),
           showId: true
-        }),
-        core.mapReportPopupLeafletOpts
-      );
-      marker.addTo(state.markerLayer);
+        })
+      });
       bounds.push([lat, lng]);
     });
     if (bounds.length && state.mapMode !== "report-pick") {
-      state.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+      state.mapCtrl.fitPoints(bounds, 40);
     }
   }
 
@@ -565,6 +529,7 @@
 
   async function refreshMapa() {
     try {
+      await initMap();
       setStatus("Sincronizando…", false, true);
       const [reports, media, pets] = await Promise.all([
         core.api("/api/reports", { token: state.session.token }),
@@ -604,7 +569,7 @@
       renderPetOptions();
       renderReportOptions();
       if (PAGE === "reporte" || PAGE === "mascotas" || PAGE === "fotos") {
-        initReportPickMap();
+        await initReportPickMap();
         renderReportsOnMap();
         restorePickMarkerFromInputs();
       }
@@ -1096,9 +1061,9 @@
       } catch (e) {
         /* ignore */
       }
-      if (state.pickMarker && state.map) {
-        state.map.removeLayer(state.pickMarker);
-        state.pickMarker = null;
+      if (state.mapCtrl && state.mapCtrl.pickMarker) {
+        state.mapCtrl.pickMarker.setMap(null);
+        state.mapCtrl.pickMarker = null;
       }
       syncCoordsHint();
       await refreshMascotas();
@@ -1189,7 +1154,7 @@
       }
 
       await refreshReporte();
-      if (PAGE === "mapa" || state.map) {
+      if (PAGE === "mapa" || state.mapCtrl) {
         try {
           state.media = await core.api("/api/media", { token: state.session.token });
           renderReportsOnMap();

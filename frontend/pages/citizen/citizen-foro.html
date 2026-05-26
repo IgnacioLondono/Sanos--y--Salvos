@@ -25,6 +25,88 @@
   <div class="ambient ambient-a"></div>
   <div class="ambient ambient-b"></div>
 
+  <!-- Modal perfil de usuario (para que funcione el avatar en cualquier pantalla) -->
+  <div id="userProfileModal" class="modal-overlay hidden">
+    <div class="modal-content modal-profile glass-card">
+      <button class="modal-close btn-close" type="button" id="btnCloseProfile" aria-label="Cerrar">
+        <i data-lucide="x" aria-hidden="true"></i>
+      </button>
+      
+      <div class="profile-header">
+        <div class="profile-avatar-large">
+          <i data-lucide="user" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h2 id="profileDisplayName" class="profile-name">Usuario</h2>
+          <p id="profileEmail" class="profile-email">correo@ejemplo.cl</p>
+          <span id="profileRole" class="badge badge-primary">Ciudadano</span>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3>Informaci�n Personal</h3>
+        <div class="profile-info-grid">
+          <div class="info-item">
+            <span class="info-label">Nombre</span>
+            <p id="profileFullName">�</p>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Correo</span>
+            <p id="profileEmailFull">correo@ejemplo.cl</p>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Tel�fono</span>
+            <p id="profilePhone">�</p>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Ubicaci�n</span>
+            <p id="profileLocation">�</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3>Estad�sticas</h3>
+        <div class="profile-stats-grid">
+          <div class="stat-item">
+            <strong id="profilePets">0</strong>
+            <span>Mascotas</span>
+          </div>
+          <div class="stat-item">
+            <strong id="profileReports">0</strong>
+            <span>Reportes</span>
+          </div>
+          <div class="stat-item">
+            <strong id="profileMedia">0</strong>
+            <span>Fotos</span>
+          </div>
+          <div class="stat-item">
+            <strong id="profileMatches">0</strong>
+            <span>Coincidencias</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <button id="btnEditProfile" class="btn btn-ghost" type="button">
+          <i data-lucide="edit" aria-hidden="true"></i>
+          Editar Perfil
+        </button>
+        <button id="btnProfileSettings" class="btn btn-ghost" type="button">
+          <i data-lucide="settings" aria-hidden="true"></i>
+          Configuraci�n
+        </button>
+      </div>
+
+      <div class="profile-footer">
+        <button id="btnProfileLogout" class="btn btn-primary" type="button" style="width: 100%;">
+          <i data-lucide="log-out" aria-hidden="true"></i>
+          Cerrar Sesi�n
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="dash-root">
     <header class="dash-header">
       <div class="dash-header-inner">
@@ -150,6 +232,7 @@
   <script src="../../src/core/shared.js"></script>
   <script src="../../src/ui/theme-ui.js"></script>
   <script src="../../src/layout/dash-layout.js"></script>
+  <script src="../../src/profile/user-profile.js"></script>
   <script src="../../src/citizen/citizen-forum.js"></script>
   <script>
     if (window.SANOS_DASH_LAYOUT) window.SANOS_DASH_LAYOUT.init();

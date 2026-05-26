@@ -38,7 +38,7 @@
           <i data-lucide="shield" aria-hidden="true"></i>
         </div>
         <div>
-          <h2 id="profileDisplayName" class="profile-name">Admin</h2>
+          <h2 id="profileDisplayName" class="profile-name">Administrador</h2>
           <p id="profileEmail" class="profile-email">admin@ejemplo.cl</p>
           <span id="profileRole" class="badge badge-admin">Administrador</span>
         </div>
@@ -74,16 +74,16 @@
           <img class="dash-brand__logo" src="../../assets/images/logo.png" alt="" width="46" height="46" />
           <div class="dash-brand__text">
             <span class="dash-brand__kicker">Sanos y salvos</span>
-            <strong class="dash-brand__title">Admin</strong>
+            <strong class="dash-brand__title">Administrador</strong>
           </div>
         </a>
         <nav class="dash-nav" aria-label="Admin">
           <a class="sidebar-link dash-nav__link" href="admin-resumen.html"><i data-lucide="activity" class="sidebar-link-icon" aria-hidden="true"></i>Resumen</a>
           <a class="sidebar-link dash-nav__link" href="admin-usuarios.html"><i data-lucide="users" class="sidebar-link-icon" aria-hidden="true"></i>Usuarios</a>
           <a class="sidebar-link dash-nav__link" href="admin-reportes.html"><i data-lucide="file-text" class="sidebar-link-icon" aria-hidden="true"></i>Reportes</a>
-          <a class="sidebar-link dash-nav__link" href="admin-capacity.html"><i data-lucide="users-round" class="sidebar-link-icon" aria-hidden="true"></i>Capacity</a>
+          <a class="sidebar-link dash-nav__link" href="admin-capacity.html"><i data-lucide="users-round" class="sidebar-link-icon" aria-hidden="true"></i>Capacidad</a>
           <a class="sidebar-link dash-nav__link" href="admin-mapa.html"><i data-lucide="map" class="sidebar-link-icon" aria-hidden="true"></i>Mapa</a>
-          <a class="sidebar-link dash-nav__link" href="admin-matching.html"><i data-lucide="sparkles" class="sidebar-link-icon" aria-hidden="true"></i>Matching</a>
+          <a class="sidebar-link dash-nav__link" href="admin-matching.html"><i data-lucide="sparkles" class="sidebar-link-icon" aria-hidden="true"></i>Coincidencias</a>
           <a class="sidebar-link dash-nav__link" href="admin-auditoria.html"><i data-lucide="scroll-text" class="sidebar-link-icon" aria-hidden="true"></i>Auditoria</a>
         </nav>
         <div class="dash-header-end">
@@ -114,7 +114,7 @@
           <a class="quick-action-card" href="admin-usuarios.html"><i data-lucide="users" aria-hidden="true"></i><span>Usuarios</span></a>
           <a class="quick-action-card" href="admin-usuarios.html"><i data-lucide="contact-round" aria-hidden="true"></i><span>Usuarios y reportes</span></a>
           <a class="quick-action-card" href="admin-mapa.html"><i data-lucide="map" aria-hidden="true"></i><span>Mapa</span></a>
-          <a class="quick-action-card" href="admin-matching.html"><i data-lucide="sparkles" aria-hidden="true"></i><span>Matching</span></a>
+          <a class="quick-action-card" href="admin-matching.html"><i data-lucide="sparkles" aria-hidden="true"></i><span>Coincidencias</span></a>
           <a class="quick-action-card" href="admin-capacity.html"><i data-lucide="users-round" aria-hidden="true"></i><span>Capacidad</span></a>
           <a class="quick-action-card" href="admin-auditoria.html"><i data-lucide="scroll-text" aria-hidden="true"></i><span>Auditoría</span></a>
         </div>
@@ -129,6 +129,10 @@
         <div class="dash-overview">
           <div id="serviceHealthGrid" class="health-strip" aria-label="Salud de servicios"></div>
           <div id="adminKpis" class="kpi-grid"></div>
+          <div class="dash-donuts">
+            <h3 class="dash-donuts__title"><i data-lucide="pie-chart" aria-hidden="true"></i>Distribución</h3>
+            <div id="adminDonuts" class="donut-grid" aria-label="Estadísticas circulares"></div>
+          </div>
         </div>
       </section>
       <section class="glass-card section section-compact reveal" id="auditoria">

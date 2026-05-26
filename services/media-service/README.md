@@ -22,4 +22,4 @@ docker compose logs -f media-service
 ```
 
 Puerto: `8095`  
-Health: `/api/media/health`
+Salud: `/api/media/health`

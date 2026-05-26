@@ -22,4 +22,4 @@ docker compose logs -f pet-catalog-service
 ```
 
 Puerto: `8092`  
-Health: `/api/pets/health`
+Salud: `/api/pets/health`

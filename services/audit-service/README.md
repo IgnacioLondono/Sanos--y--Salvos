@@ -22,4 +22,4 @@ docker compose logs -f audit-service
 ```
 
 Puerto: `8098`  
-Health: `/api/audit/health`
+Salud: `/api/audit/health`

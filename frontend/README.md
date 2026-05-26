@@ -2,7 +2,7 @@
 
 ```
 frontend/
-├── index.html              # Login
+├── index.html              # Inicio de sesión
 ├── register.html           # Registro
 ├── pages/
 │   ├── citizen/            # Panel ciudadano (*.html)
@@ -25,9 +25,9 @@ frontend/
 
 | Qué | Ruta |
 |-----|------|
-| Login | `/index.html` |
+| Inicio de sesión | `/index.html` |
 | Foro | `/pages/citizen/citizen-foro.html` |
-| Admin | `/pages/admin/admin-resumen.html` |
+| Administrador | `/pages/admin/admin-resumen.html` |
 
 Con **Docker** (nginx), las URLs cortas siguen valiendo: `/citizen-foro.html` → redirige a `pages/citizen/`.
 

@@ -17,7 +17,7 @@
     ]},
     { group: "Operaciones", items: [
       { href: "admin-mapa.html", icon: "map", label: "Mapa en vivo", page: "mapa" },
-      { href: "admin-operaciones.html", icon: "workflow", label: "Matching", page: "operaciones" }
+      { href: "admin-operaciones.html", icon: "workflow", label: "Coincidencias", page: "operaciones" }
     ]},
     { group: "Sistema", items: [
       { href: "admin-auditoria.html", icon: "scroll-text", label: "Auditoría", page: "auditoria" }
@@ -43,9 +43,9 @@
     usuarios: "Usuarios y reportes",
     reportes: "Usuarios y reportes",
     mapa: "Mapa y zonas",
-    operaciones: "Matching y operaciones",
+    operaciones: "Coincidencias y operaciones",
     capacity: "Capacidad y refugios",
-    matching: "Matching y operaciones",
+    matching: "Coincidencias y operaciones",
     auditoria: "Auditoría del sistema"
   };
 
@@ -196,7 +196,7 @@
             <i data-lucide="panel-left" aria-hidden="true"></i>
           </button>
           <div class="dash-topbar__titles">
-            <span class="dash-topbar__kicker">${role === "admin" ? "Admin" : "Ciudadano"}</span>
+            <span class="dash-topbar__kicker">${role === "admin" ? "Administrador" : "Ciudadano"}</span>
             <h1 class="dash-topbar__title">${title}</h1>
           </div>
         </div>

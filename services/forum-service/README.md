@@ -22,4 +22,4 @@ docker compose logs -f forum-service
 ```
 
 Puerto: `8099`  
-Health: `/api/forum/health` (segun configuracion de gateway/BFF)
+Salud: `/api/forum/health` (según configuración de gateway/BFF)

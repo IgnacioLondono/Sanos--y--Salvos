@@ -17,15 +17,14 @@
     tableSort: {},
     usersFilter: "",
     userModal: { user: null, reports: [], mediaByReport: {} },
-    map: null,
-    zonesLayer: null,
-    reportsLayer: null
+    mapCtrl: null
   };
 
   const els = {
     adminIdentity: document.getElementById("adminIdentity"),
     adminStatus: document.getElementById("adminStatus"),
     adminKpis: document.getElementById("adminKpis"),
+    adminDonuts: document.getElementById("adminDonuts"),
     serviceHealthGrid: document.getElementById("serviceHealthGrid"),
     usersTable: document.getElementById("usersTable"),
     usersContainer: document.getElementById("usersContainer"),
@@ -212,8 +211,7 @@
   function refreshForPage() {
     if (PAGE === "resumen") return refreshResumen();
     if (PAGE === "mapa") {
-      initMap();
-      return refreshMapa();
+      return initMap().then(() => refreshMapa());
     }
     if (PAGE === "usuarios") return refreshUsuarios();
     if (PAGE === "reportes") return refreshReportes();
@@ -221,17 +219,23 @@
     if (PAGE === "auditoria") return refreshAuditoria();
   }
 
-  function initMap() {
-    if (typeof L === "undefined") return;
+  async function initMap() {
+    const container = document.getElementById("adminMap");
+    if (!container || !window.SANOS_MAPS) return;
+    if (state.mapCtrl) {
+      requestAnimationFrame(() => state.mapCtrl.invalidateSize());
+      return;
+    }
     const settings = core.loadSettings();
     const center = settings.defaultCenter || { lat: -33.4489, lng: -70.6693 };
-    state.map = L.map("adminMap").setView([center.lat, center.lng], 11);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap"
-    }).addTo(state.map);
-    state.zonesLayer = L.layerGroup().addTo(state.map);
-    state.reportsLayer = L.layerGroup().addTo(state.map);
+    try {
+      state.mapCtrl = await window.SANOS_MAPS.createMap(container, {
+        center,
+        zoom: 11
+      });
+    } catch (err) {
+      setStatus(err.message || "Mapa no disponible", true);
+    }
   }
 
   function riskColor(level) {
@@ -242,9 +246,9 @@
   }
 
   function renderMap() {
-    if (!state.map) return;
-    state.zonesLayer.clearLayers();
-    state.reportsLayer.clearLayers();
+    if (!state.mapCtrl) return;
+    state.mapCtrl.clearMarkers();
+    state.mapCtrl.clearCircles();
     const bounds = [];
 
     state.zones.forEach((zone) => {
@@ -253,19 +257,11 @@
       const lng = Number(zone.longitude);
       if (Number.isNaN(lat) || Number.isNaN(lng)) return;
       const color = riskColor(zone.riskLevel);
-      const circle = L.circle([lat, lng], {
-        radius: 800,
+      state.mapCtrl.addCircle(lat, lng, {
         color,
-        fillColor: color,
-        fillOpacity: 0.25,
-        weight: 2
+        radius: 800,
+        popupHtml: core.buildMapZonePopup(zone.commune, zone.riskLevel, zone.reportId)
       });
-      circle.bindPopup(
-        `<strong>Zona ${core.escapeHtml(zone.commune || "")}</strong><br/>` +
-          `Riesgo: ${core.escapeHtml(zone.riskLevel || "-")}<br/>` +
-          `Reporte vinculado: ${core.escapeHtml(String(zone.reportId || "-"))}`
-      );
-      circle.addTo(state.zonesLayer);
       bounds.push([lat, lng]);
     });
 
@@ -278,27 +274,21 @@
       if (Number.isNaN(lat) || Number.isNaN(lng)) return;
       const isLost = String(report.type || "").toUpperCase() === "LOST";
       const color = isLost ? "#c0392b" : "#3d8f73";
-      const marker = L.circleMarker([lat, lng], {
-        radius: 7,
-        color,
-        fillColor: color,
-        fillOpacity: 0.85
-      });
       const petName = report.petId ? core.petNameById(report.petId, state.pets) : "";
-      marker.bindPopup(
-        core.buildMapReportPopup(report, {
+      state.mapCtrl.addMarker(lat, lng, {
+        color,
+        scale: 7,
+        popupHtml: core.buildMapReportPopup(report, {
           petName,
           imageUrl: mediaIndex.imageForReport(report),
           showId: true
-        }),
-        core.mapReportPopupLeafletOpts
-      );
-      marker.addTo(state.reportsLayer);
+        })
+      });
       bounds.push([lat, lng]);
     });
 
     if (bounds.length) {
-      state.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 13 });
+      state.mapCtrl.fitPoints(bounds, 40);
     }
   }
 
@@ -412,6 +402,7 @@
       state.serviceHealth = serviceHealth;
 
       if (els.adminKpis) renderKpis();
+      if (els.adminDonuts) renderDonuts();
       if (els.serviceHealthGrid) renderServiceHealth();
       if (els.auditTable) {
         renderTableWithSortControls({
@@ -470,6 +461,9 @@
           ],
           limit: 20
         });
+      }
+      if (els.reportsTable) {
+        renderReportsTable(state.reports);
       }
       renderMap();
       setStatus("Listo");
@@ -791,7 +785,7 @@
 
       renderUserReportsList();
       renderUsersCards(state.users);
-      if (PAGE === "mapa" && state.map) {
+      if (PAGE === "mapa" && state.mapCtrl) {
         renderMap();
       }
       setStatus(`Reporte #${reportId} eliminado.`);
@@ -1081,8 +1075,8 @@
       { label: "Usuarios", value: state.users.length, icon: "users", tint: "kpi-ico-indigo" },
       { label: "Mascotas", value: d.totalPets || 0, icon: "paw-print", tint: "kpi-ico-mint" },
       { label: "Reportes", value: d.totalReports || 0, icon: "file-text", tint: "kpi-ico-gold" },
-      { label: "Capacity", value: d.totalCapacityRecords || 0, icon: "users-round", tint: "kpi-ico-sky" },
-      { label: "Matching", value: state.matching.length || 0, icon: "sparkles", tint: "kpi-ico-violet" },
+      { label: "Capacidad", value: d.totalCapacityRecords || 0, icon: "users-round", tint: "kpi-ico-sky" },
+      { label: "Coincidencias", value: state.matching.length || 0, icon: "sparkles", tint: "kpi-ico-violet" },
       { label: "Zonas", value: state.zones.length || 0, icon: "map-pin", tint: "kpi-ico-rose" },
       { label: "Auditoria", value: state.audit.length || 0, icon: "history", tint: "kpi-ico-indigo" },
       { label: "Servicios OK", value: countServicesUp(), icon: "server", tint: "kpi-ico-mint" }
@@ -1103,6 +1097,119 @@
         `
       )
       .join("");
+    core.refreshIcons();
+  }
+
+  function pct(part, total) {
+    if (!total) return 0;
+    return Math.round((part / total) * 100);
+  }
+
+  function riskBucket(level) {
+    const l = String(level || "").toUpperCase();
+    if (l.includes("ALT") || l === "HIGH") return "ALTO";
+    if (l.includes("MED") || l === "MEDIUM") return "MEDIO";
+    return "BAJO";
+  }
+
+  function reportTypeBucket(type) {
+    const t = String(type || "").toUpperCase();
+    if (t === "FOUND" || t === "ENCONTRADA") return "HALLAZGO";
+    return "PERDIDA";
+  }
+
+  function reportStatusBucket(status) {
+    const s = String(status || "").toUpperCase();
+    if (s === "CLOSED" || s === "CERRADO") return "CERRADO";
+    return "ABIERTO";
+  }
+
+  function donutHtml(title, segments) {
+    const total = segments.reduce((acc, s) => acc + (Number(s.value) || 0), 0);
+    let cursor = 0;
+    const stops = segments
+      .map((s) => {
+        const v = Number(s.value) || 0;
+        const start = cursor;
+        cursor += total ? (v / total) * 100 : 0;
+        const end = cursor;
+        return `${s.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
+      })
+      .join(", ");
+
+    const centerLabel = total ? `${total}` : "0";
+    const centerSub = total ? "items" : "sin datos";
+
+    return `
+      <article class="donut-card">
+        <div class="donut" style="background: conic-gradient(${stops || "#334155 0% 100%"});">
+          <div class="donut__hole">
+            <strong>${core.escapeHtml(centerLabel)}</strong>
+            <span>${core.escapeHtml(centerSub)}</span>
+          </div>
+        </div>
+        <div class="donut__meta">
+          <p class="donut__title">${core.escapeHtml(title)}</p>
+          <div class="donut__legend">
+            ${segments
+              .map((s) => {
+                const p = pct(Number(s.value) || 0, total);
+                return `<span class="donut__leg"><i style="background:${s.color}"></i>${core.escapeHtml(
+                  s.label
+                )} <strong>${p}%</strong></span>`;
+              })
+              .join("")}
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderDonuts() {
+    if (!els.adminDonuts) return;
+
+    const reports = Array.isArray(state.reports) ? state.reports : [];
+    const zones = Array.isArray(state.zones) ? state.zones : [];
+
+    const typeCounts = reports.reduce(
+      (acc, r) => {
+        acc[reportTypeBucket(r.type)]++;
+        return acc;
+      },
+      { PERDIDA: 0, HALLAZGO: 0 }
+    );
+
+    const statusCounts = reports.reduce(
+      (acc, r) => {
+        acc[reportStatusBucket(r.status)]++;
+        return acc;
+      },
+      { ABIERTO: 0, CERRADO: 0 }
+    );
+
+    const riskCounts = zones.reduce(
+      (acc, z) => {
+        acc[riskBucket(z.riskLevel)]++;
+        return acc;
+      },
+      { BAJO: 0, MEDIO: 0, ALTO: 0 }
+    );
+
+    els.adminDonuts.innerHTML =
+      donutHtml("Reportes por tipo", [
+        { label: "Perdida", value: typeCounts.PERDIDA, color: "#dc2626" },
+        { label: "Hallazgo", value: typeCounts.HALLAZGO, color: "#16a34a" }
+      ]) +
+      donutHtml("Reportes por estado", [
+        { label: "Abierto", value: statusCounts.ABIERTO, color: "#f59e0b" },
+        { label: "Cerrado", value: statusCounts.CERRADO, color: "#64748b" }
+      ]) +
+      donutHtml("Zonas por riesgo", [
+        { label: "Bajo", value: riskCounts.BAJO, color: "#16a34a" },
+        { label: "Medio", value: riskCounts.MEDIO, color: "#f59e0b" },
+        { label: "Alto", value: riskCounts.ALTO, color: "#dc2626" }
+      ]);
+
     core.refreshIcons();
   }
 
@@ -1168,8 +1275,8 @@
       { name: "Reportes", path: "/api/reports/health" },
       { name: "Geo Inteligencia", path: "/api/zones/health" },
       { name: "Media", path: "/api/media/health" },
-      { name: "Matching IA", path: "/api/matching/health" },
-      { name: "Capacity", path: "/api/capacity/health" },
+      { name: "Coincidencias IA", path: "/api/matching/health" },
+      { name: "Capacidad", path: "/api/capacity/health" },
       { name: "Auditoria", path: "/api/audit/health" },
       { name: "Foro", path: "/api/forum/health" }
     ];

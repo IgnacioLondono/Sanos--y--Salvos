@@ -53,13 +53,13 @@ Abre **una terminal por servicio** (o usa el script `scripts/run-xampp.ps1`):
 | Servicio | Puerto | Comando (ejemplo) |
 |----------|--------|-------------------|
 | IAM | 8091 | `mvn spring-boot:run` en `services/iam-service` |
-| Pet catalog | 8092 | `services/pet-catalog-service` |
-| Reports | 8093 | `services/reports-service` |
-| Geo | 8094 | `services/geo-intelligence-service` |
+| Catálogo de mascotas | 8092 | `services/pet-catalog-service` |
+| Reportes | 8093 | `services/reports-service` |
+| Geo (zonas) | 8094 | `services/geo-intelligence-service` |
 | Media | 8095 | `services/media-service` |
-| Matching | 8096 | `services/matching-service` |
-| Capacity | 8097 | `services/capacity-service` |
-| Audit | 8098 | `services/audit-service` |
+| Coincidencias | 8096 | `services/matching-service` |
+| Capacidad | 8097 | `services/capacity-service` |
+| Auditoría | 8098 | `services/audit-service` |
 | **Foro** | **8099** | `services/forum-service` |
 | BFF | 8081 | `bff` |
 | Gateway | 8080 | `gateway` |
@@ -98,7 +98,7 @@ Abre: http://localhost:5173
 1. Gateway activo: http://localhost:8080/api/forum/health → `{"status":"UP","service":"forum-service"}`
 2. Swagger foro directo: http://localhost:8099/swagger-ui.html
 3. Swagger unificado: http://localhost:8080/swagger-ui/index.html → selector **Foro**
-4. Login ciudadano en el frontend → menu **Foro**
+4. Inicio de sesión ciudadano en el frontend → menú **Foro**
 
 ## 6. Tablas en phpMyAdmin
 

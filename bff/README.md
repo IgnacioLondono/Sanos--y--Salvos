@@ -28,7 +28,7 @@ docker compose logs -f bff
 
 Puerto por defecto: `8081`
 
-## Endpoints utiles
+## Endpoints útiles
 
-- Health: `/api/bff/health`
-- Dashboard: `/api/bff/dashboard`
+- Salud: `/api/bff/health`
+- Panel: `/api/bff/dashboard`

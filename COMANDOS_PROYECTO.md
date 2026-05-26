@@ -2,6 +2,26 @@
 
 > Ejecutar desde la raiz del repo: `Sanos--y--Salvos-main`
 
+## Mapa (Google Maps)
+
+Los mapas del ciudadano y del admin usan **Google Maps** (ya no OpenStreetMap/Leaflet).
+
+1. Crea una API key en [Google Cloud Console](https://console.cloud.google.com/) y habilita **Maps JavaScript API**.
+2. Pega la clave en `frontend/src/core/config.js`:
+
+```javascript
+googleMapsApiKey: "TU_API_KEY_AQUI",
+```
+
+3. Reconstruye el frontend si usas Docker:
+
+```powershell
+docker compose build frontend
+docker compose up -d frontend
+```
+
+4. Recarga el navegador con **Ctrl+F5** en `http://localhost:5173`.
+
 ## 1) Docker - ciclo principal
 
 ### Levantar todo (build + up)

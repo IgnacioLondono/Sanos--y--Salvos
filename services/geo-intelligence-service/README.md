@@ -22,4 +22,4 @@ docker compose logs -f geo-intelligence-service
 ```
 
 Puerto: `8094`  
-Health: `/api/zones/health`
+Salud: `/api/zones/health`

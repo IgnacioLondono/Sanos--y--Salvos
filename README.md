@@ -73,14 +73,14 @@ flowchart LR
   FE[Frontend :5173] --> GW[Gateway :8080]
   GW --> BFF[BFF :8081]
   GW --> IAM[IAM :8091]
-  GW --> PET[Pet Catalog :8092]
-  GW --> REP[Reports :8093]
+  GW --> PET[Catálogo Mascotas :8092]
+  GW --> REP[Reportes :8093]
   GW --> GEO[Geo :8094]
   GW --> MED[Media :8095]
-  GW --> MAT[Matching :8096]
-  GW --> CAP[Capacity :8097]
-  GW --> AUD[Audit :8098]
-  GW --> FOR[Forum :8099]
+  GW --> MAT[Coincidencias :8096]
+  GW --> CAP[Capacidad :8097]
+  GW --> AUD[Auditoría :8098]
+  GW --> FOR[Foro :8099]
   BFF --> IAM
   BFF --> PET
   BFF --> REP
@@ -304,6 +304,10 @@ frontend/
 
 `frontend/nginx.conf` mantiene redirecciones cortas de compatibilidad (`/citizen-*.html` y `/admin-*.html`).
 
+### Mapas (Google Maps)
+
+Vistas con mapa: **Hacer reporte**, **Mapa** (ciudadano) y **Mapa y zonas** (admin). Requieren `googleMapsApiKey` en `frontend/src/core/config.js` (Maps JavaScript API). Sin clave, el contenedor muestra un aviso de configuración.
+
 ---
 
 ## API y Swagger
@@ -323,8 +327,8 @@ Cada microservicio expone **OpenAPI 3** (`/v3/api-docs`) y **Swagger UI** con DT
 | Reportes | 8093 | http://localhost:8093/swagger-ui/index.html | http://localhost:8093/v3/api-docs |
 | Geo (zonas) | 8094 | http://localhost:8094/swagger-ui/index.html | http://localhost:8094/v3/api-docs |
 | Media | 8095 | http://localhost:8095/swagger-ui/index.html | http://localhost:8095/v3/api-docs |
-| Matching IA | 8096 | http://localhost:8096/swagger-ui/index.html | http://localhost:8096/v3/api-docs |
-| Capacity | 8097 | http://localhost:8097/swagger-ui/index.html | http://localhost:8097/v3/api-docs |
+| Coincidencias IA | 8096 | http://localhost:8096/swagger-ui/index.html | http://localhost:8096/v3/api-docs |
+| Capacidad | 8097 | http://localhost:8097/swagger-ui/index.html | http://localhost:8097/v3/api-docs |
 | Auditoría | 8098 | http://localhost:8098/swagger-ui/index.html | http://localhost:8098/v3/api-docs |
 | Foro | 8099 | http://localhost:8099/swagger-ui/index.html | http://localhost:8099/v3/api-docs |
 | BFF | 8081 | http://localhost:8081/swagger-ui/index.html | http://localhost:8081/v3/api-docs |
@@ -336,6 +340,453 @@ Vía gateway (selector de specs): rutas `/openapi/{servicio}/v3/api-docs` (ej. `
 1. `POST /api/iam/login`
 2. Copiar token JWT
 3. Usar `Authorization: Bearer <token>`
+
+---
+
+## Colección Postman (requests listos para copiar/pegar)
+
+Usa siempre el **gateway** como base:
+
+- **Base URL**: `http://localhost:8080`
+- **Variable Postman sugerida**: `{{baseUrl}} = http://localhost:8080`
+
+Para endpoints protegidos:
+
+- **Header**: `Authorization: Bearer {{jwt}}`
+- **Variable**: `{{jwt}}` = token obtenido en login
+
+### IAM (Identidad)
+
+#### Registrar usuario (ciudadano)
+
+`POST {{baseUrl}}/api/iam/register`
+
+```json
+{
+  "fullName": "Ana Perez Lopez",
+  "rutDocument": "12345678-9",
+  "email": "ana@mail.cl",
+  "password": "Ana#2026!",
+  "displayName": "Ana",
+  "commune": "Providencia",
+  "phone": "+56 9 1234 5678",
+  "address": "Av. Ejemplo 123",
+  "emergencyContactName": "Carlos Perez",
+  "emergencyContactPhone": "+56 9 8765 4321",
+  "acceptedTerms": true,
+  "acceptedPrivacyPolicy": true,
+  "role": "CITIZEN"
+}
+```
+
+#### Login (obtener JWT)
+
+`POST {{baseUrl}}/api/iam/login`
+
+```json
+{
+  "email": "ana@mail.cl",
+  "password": "Ana#2026!"
+}
+```
+
+#### Perfil del usuario autenticado
+
+`GET {{baseUrl}}/api/iam/profile`
+
+Headers:
+- `Authorization: Bearer {{jwt}}`
+
+#### Actualizar perfil
+
+`PATCH {{baseUrl}}/api/iam/profile`
+
+Headers:
+- `Authorization: Bearer {{jwt}}`
+
+```json
+{
+  "fullName": "Ana Perez Lopez",
+  "commune": "Santiago",
+  "address": "Otra dirección 456",
+  "phone": "+56 9 1111 2222",
+  "emergencyContactName": "Carla Perez",
+  "emergencyContactPhone": "+56 9 3333 4444"
+}
+```
+
+#### Cambiar contraseña
+
+`POST {{baseUrl}}/api/iam/change-password`
+
+Headers:
+- `Authorization: Bearer {{jwt}}`
+
+```json
+{
+  "currentPassword": "Ana#2026!",
+  "newPassword": "Ana#2026!Nueva"
+}
+```
+
+#### Crear administrador (requiere JWT ADMIN)
+
+`POST {{baseUrl}}/api/iam/admin/users`
+
+Headers:
+- `Authorization: Bearer {{jwtAdmin}}`
+
+```json
+{
+  "fullName": "Maria Admin",
+  "rutDocument": "22222222-2",
+  "email": "admin2@sanosysalvos.cl",
+  "password": "Admin#2026!",
+  "commune": "Santiago",
+  "phone": "+56 9 5555 6666"
+}
+```
+
+#### Listar usuarios
+
+`GET {{baseUrl}}/api/iam/users`
+
+#### Usuario por ID
+
+`GET {{baseUrl}}/api/iam/users/1`
+
+#### Actualizar rol de usuario (requiere JWT ADMIN)
+
+`PATCH {{baseUrl}}/api/iam/users/1/role`
+
+Headers:
+- `Authorization: Bearer {{jwtAdmin}}`
+
+```json
+{ "role": "ADMIN" }
+```
+
+#### Eliminar usuario (requiere JWT ADMIN)
+
+`DELETE {{baseUrl}}/api/iam/users/1`
+
+Headers:
+- `Authorization: Bearer {{jwtAdmin}}`
+
+### Mascotas (Catálogo)
+
+#### Listar mascotas
+
+`GET {{baseUrl}}/api/pets`
+
+#### Crear mascota
+
+`POST {{baseUrl}}/api/pets`
+
+```json
+{
+  "name": "Milo",
+  "species": "DOG",
+  "breed": "Mestizo",
+  "color": "Café",
+  "size": "MEDIANO",
+  "chipNumber": "CHIP-001",
+  "ownerId": 1
+}
+```
+
+#### Mascota por ID
+
+`GET {{baseUrl}}/api/pets/1`
+
+#### Buscar por chip
+
+`GET {{baseUrl}}/api/pets/by-chip/CHIP-001`
+
+#### Mascotas por dueño
+
+`GET {{baseUrl}}/api/pets/owner/1`
+
+#### Eliminar mascota
+
+`DELETE {{baseUrl}}/api/pets/1`
+
+### Reportes
+
+#### Listar reportes
+
+`GET {{baseUrl}}/api/reports`
+
+#### Crear reporte
+
+`POST {{baseUrl}}/api/reports`
+
+```json
+{
+  "petId": 1,
+  "createdBy": 1,
+  "type": "LOST",
+  "status": "OPEN",
+  "commune": "Colina",
+  "description": "Se extravió cerca de la plaza.",
+  "healthStatus": "Bien",
+  "latitude": -33.2001,
+  "longitude": -70.6812
+}
+```
+
+#### Reporte por ID
+
+`GET {{baseUrl}}/api/reports/1`
+
+#### Reportes por mascota
+
+`GET {{baseUrl}}/api/reports/pet/1`
+
+#### Reportes por usuario
+
+`GET {{baseUrl}}/api/reports/user/1`
+
+#### Reportes por estado
+
+`GET {{baseUrl}}/api/reports/status/OPEN`
+
+#### Actualizar estado (PATCH)
+
+`PATCH {{baseUrl}}/api/reports/1/status`
+
+```json
+{ "status": "CLOSED" }
+```
+
+#### Eliminar reporte
+
+`DELETE {{baseUrl}}/api/reports/1`
+
+### Zonas (Geo)
+
+#### Listar zonas
+
+`GET {{baseUrl}}/api/zones`
+
+#### Crear zona
+
+`POST {{baseUrl}}/api/zones`
+
+```json
+{
+  "commune": "Providencia",
+  "riskLevel": "MEDIUM",
+  "latitude": -33.425,
+  "longitude": -70.615,
+  "reportId": 1
+}
+```
+
+#### Zonas por comuna
+
+`GET {{baseUrl}}/api/zones/commune/Providencia`
+
+#### Resumen por riesgo
+
+`GET {{baseUrl}}/api/zones/risk-summary`
+
+#### Coordenadas (tabla coordenadas_reporte)
+
+`GET {{baseUrl}}/api/zones/coordinates`
+
+### Media (evidencias/fotos)
+
+#### Listar fotos
+
+`GET {{baseUrl}}/api/media`
+
+#### Subir imagen (multipart)
+
+`POST {{baseUrl}}/api/media/upload`
+
+Body (form-data):
+- `file`: (elige un archivo .jpg/.png)
+- `petId`: `1` (opcional)
+- `reportId`: `1` (opcional)
+- `tags`: `evidencia,mascota` (opcional)
+
+#### Crear registro media (JSON con URL)
+
+`POST {{baseUrl}}/api/media`
+
+```json
+{
+  "petId": 1,
+  "reportId": 1,
+  "url": "https://cdn.example/photo.jpg",
+  "tags": ["evidencia", "mascota"],
+  "takenAt": "2026-04-23T12:00:00"
+}
+```
+
+#### Fotos por mascota
+
+`GET {{baseUrl}}/api/media/pet/1`
+
+#### Fotos por reporte
+
+`GET {{baseUrl}}/api/media/report/1`
+
+### Coincidencias (Matching IA)
+
+#### Listar coincidencias
+
+`GET {{baseUrl}}/api/matching`
+
+#### Ejecutar matching completo
+
+`POST {{baseUrl}}/api/matching/run`
+
+#### Crear match manual
+
+`POST {{baseUrl}}/api/matching`
+
+```json
+{
+  "lostReportId": 1,
+  "foundReportId": 2,
+  "score": 0.82,
+  "explanation": "Coincidencia por zona y descripción."
+}
+```
+
+#### Coincidencias por reporte
+
+`GET {{baseUrl}}/api/matching/report/1`
+
+### Capacidad (equipos)
+
+#### Listar equipos
+
+`GET {{baseUrl}}/api/capacity`
+
+#### Crear equipo
+
+`POST {{baseUrl}}/api/capacity`
+
+```json
+{
+  "name": "Brigada Norte",
+  "organization": "ONG Rescate",
+  "zone": "Colina",
+  "volunteers": 12,
+  "hoursAvailable": 40,
+  "availableFrom": "2026-05-25T10:00:00"
+}
+```
+
+#### Equipos por zona
+
+`GET {{baseUrl}}/api/capacity/zone/Colina`
+
+#### Resumen agregado
+
+`GET {{baseUrl}}/api/capacity/summary`
+
+### Auditoría
+
+#### Listar logs
+
+`GET {{baseUrl}}/api/audit`
+
+#### Registrar evento (manual)
+
+`POST {{baseUrl}}/api/audit`
+
+```json
+{
+  "entity": "Reporte",
+  "operation": "CREATE",
+  "actor": "admin@sanosysalvos.cl",
+  "changes": "{\"id\":1,\"status\":\"OPEN\"}"
+}
+```
+
+#### Logs por entidad
+
+`GET {{baseUrl}}/api/audit/entity/Reporte`
+
+#### Logs por actor
+
+`GET {{baseUrl}}/api/audit/actor/admin@sanosysalvos.cl`
+
+### Foro
+
+#### Listar hilos (opcional category=AYUDA|CONSEJOS|GENERAL)
+
+`GET {{baseUrl}}/api/forum/threads`
+
+`GET {{baseUrl}}/api/forum/threads?category=AYUDA`
+
+#### Detalle de hilo
+
+`GET {{baseUrl}}/api/forum/threads/1`
+
+#### Crear hilo
+
+`POST {{baseUrl}}/api/forum/threads`
+
+```json
+{
+  "title": "¿Cómo marcar ubicación en el mapa?",
+  "content": "No logro mover el marcador, ¿alguien me ayuda?",
+  "category": "AYUDA",
+  "authorId": 1,
+  "authorName": "Ana Perez"
+}
+```
+
+#### Responder en hilo
+
+`POST {{baseUrl}}/api/forum/threads/1/posts`
+
+```json
+{
+  "content": "Toca el mapa y luego arrastra el marcador.",
+  "authorId": 2,
+  "authorName": "Pedro Soto"
+}
+```
+
+### BFF (agregación para frontend)
+
+#### Dashboard consolidado
+
+`GET {{baseUrl}}/api/bff/dashboard`
+
+#### Datos para mapa
+
+`GET {{baseUrl}}/api/bff/map`
+
+#### Vista mascota enriquecida
+
+`GET {{baseUrl}}/api/bff/pet-overview/1`
+
+### Gateway (monitoreo)
+
+#### Salud gateway (propio)
+
+`GET {{baseUrl}}/api/gateway/health`
+
+#### Circuit breaker: resumen
+
+`GET {{baseUrl}}/api/gateway/circuit-breaker/status`
+
+#### Circuit breaker: detalle por nombre
+
+`GET {{baseUrl}}/api/gateway/circuit-breaker/serviceCircuitBreaker`
+
+`GET {{baseUrl}}/api/gateway/circuit-breaker/criticalServiceCircuitBreaker`
+
+#### Circuit breaker: health detallado
+
+`GET {{baseUrl}}/api/gateway/circuit-breaker/health/detailed`
 
 ---
 

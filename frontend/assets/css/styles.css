@@ -1930,8 +1930,29 @@ svg.lucide {
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
 }
 
-.map-canvas .leaflet-container {
-  filter: var(--map-filter);
+.map-canvas > div,
+.map-canvas .gm-style > div {
+  width: 100%;
+  height: 100%;
+}
+
+.map-canvas__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: inherit;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.map-canvas__placeholder strong {
+  color: var(--text);
+  display: block;
+  margin-bottom: 8px;
 }
 
 [data-theme="dark"] .data-table th {

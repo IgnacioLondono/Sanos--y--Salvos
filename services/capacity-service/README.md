@@ -22,4 +22,4 @@ docker compose logs -f capacity-service
 ```
 
 Puerto: `8097`  
-Health: `/api/capacity/health`
+Salud: `/api/capacity/health`

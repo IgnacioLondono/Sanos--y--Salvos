@@ -258,7 +258,40 @@
       return String(value);
     }
 
-    return date.toLocaleString();
+    return date.toLocaleString("es-CL", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+  }
+
+  /** Fecha corta para popups del mapa (sin caracteres raros de AM/PM). */
+  function formatMapDate(value) {
+    return formatDate(value);
+  }
+
+  function buildMapPickPopup(title, lines) {
+    const rows = (lines || [])
+      .filter(Boolean)
+      .map(
+        (line) =>
+          `<p style="margin:0 0 4px;font-size:12px;line-height:1.35;color:#cbd5e1;">${escapeHtml(line)}</p>`
+      )
+      .join("");
+    return `<div class="map-info-card" style="background:#1e293b;color:#f1f5f9;border-radius:10px;padding:10px 12px;font-family:system-ui,-apple-system,sans-serif;max-width:220px;box-shadow:0 4px 16px rgba(0,0,0,.35);">
+      <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#f8fafc;">${escapeHtml(title)}</p>
+      ${rows}
+    </div>`;
+  }
+
+  function buildMapZonePopup(commune, riskLevel, reportId) {
+    return buildMapPickPopup(`Zona ${commune || ""}`, [
+      `Riesgo: ${riskLevel || "-"}`,
+      `Reporte vinculado: ${reportId != null ? reportId : "-"}`
+    ]);
   }
 
   function mediaItemUrl(item) {
@@ -357,16 +390,16 @@
     const metaLine = metaParts.join(" · ");
 
     const descHtml = report.description
-      ? `<p class="map-report-popup__desc">${escapeHtml(truncate(report.description, 72))}</p>`
+      ? `<p class="map-report-popup__desc">${escapeHtml(truncate(report.description, 110))}</p>`
       : "";
 
     const dateHtml = report.createdAt
-      ? `<p class="map-report-popup__date">${escapeHtml(formatDate(report.createdAt))}</p>`
+      ? `<p class="map-report-popup__date">${escapeHtml(formatMapDate(report.createdAt))}</p>`
       : "";
 
     const layoutClass = hasImg ? " map-report-popup--has-img" : "";
 
-    return `<div class="map-report-popup${layoutClass}">
+    return `<div class="map-report-popup map-info-card${layoutClass}" style="background:#1e293b;color:#f1f5f9;">
       ${imgHtml}
       <div class="map-report-popup__body">
         <div class="map-report-popup__head">
@@ -432,6 +465,9 @@
     reportStatusLabel,
     petNameById,
     buildMapReportPopup,
+    buildMapPickPopup,
+    buildMapZonePopup,
+    formatMapDate,
     mapReportPopupLeafletOpts,
     escapeHtml,
     truncate,

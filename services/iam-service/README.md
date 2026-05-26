@@ -22,4 +22,4 @@ docker compose logs -f iam-service
 ```
 
 Puerto: `8091`  
-Health: `/api/iam/health`
+Salud: `/api/iam/health`

@@ -22,4 +22,4 @@ docker compose logs -f reports-service
 ```
 
 Puerto: `8093`  
-Health: `/api/reports/health`
+Salud: `/api/reports/health`
