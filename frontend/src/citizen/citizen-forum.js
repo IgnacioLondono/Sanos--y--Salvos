@@ -54,7 +54,43 @@
     }
 
     wireCitizenNav();
-    loadThreads();
+    ensureValidSession().then((ok) => {
+      if (ok) loadThreads();
+    });
+  }
+
+  async function ensureValidSession() {
+    const token = core.normalizeToken(state.session.token);
+    if (!token) {
+      core.clearSession("citizen");
+      core.redirectToLogin("session");
+      return false;
+    }
+    state.session.token = token;
+    try {
+      await core.api("/api/iam/profile", { token });
+      return true;
+    } catch (error) {
+      if (core.isUnauthorizedError(error)) {
+        core.clearSession("citizen");
+        core.redirectToLogin("session");
+        return false;
+      }
+      setStatus(
+        "No se pudo validar la sesión. Comprueba que el gateway esté activo en " +
+          core.getApiBaseUrl() +
+          ".",
+        true
+      );
+      return true;
+    }
+  }
+
+  function handleAuthError(error) {
+    if (!core.isUnauthorizedError(error)) return false;
+    core.clearSession("citizen");
+    core.redirectToLogin("session");
+    return true;
   }
 
   function wireActions() {
@@ -139,12 +175,12 @@
     try {
       setStatus("Cargando foro…", false, true);
       const q = state.categoryFilter ? `?category=${encodeURIComponent(state.categoryFilter)}` : "";
-      state.threads = await core.api(`/api/forum/threads${q}`, { token: state.session.token });
+      state.threads = await core.api(`/api/forum/threads${q}`, { auth: false });
       showView("list");
       renderThreadList();
       setStatus("Foro actualizado.");
     } catch (error) {
-      setStatus(error.message, true);
+      if (!handleAuthError(error)) setStatus(error.message, true);
     }
   }
 
@@ -193,14 +229,12 @@
     try {
       setStatus("Cargando hilo…", false, true);
       state.selectedThreadId = threadId;
-      state.detail = await core.api(`/api/forum/threads/${threadId}`, {
-        token: state.session.token
-      });
+      state.detail = await core.api(`/api/forum/threads/${threadId}`, { auth: false });
       renderThreadDetail();
       showView("thread");
       setStatus("Hilo cargado.");
     } catch (error) {
-      setStatus(error.message, true);
+      if (!handleAuthError(error)) setStatus(error.message, true);
     }
   }
 
@@ -266,7 +300,7 @@
       await openThread(state.selectedThreadId);
       setStatus("Respuesta publicada.");
     } catch (error) {
-      setStatus(error.message, true);
+      if (!handleAuthError(error)) setStatus(error.message, true);
     }
   }
 
@@ -303,7 +337,7 @@
       showView("thread");
       setStatus("Hilo creado.");
     } catch (error) {
-      setStatus(error.message, true);
+      if (!handleAuthError(error)) setStatus(error.message, true);
     }
   }
 

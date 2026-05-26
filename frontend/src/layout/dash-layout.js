@@ -1,6 +1,7 @@
 (function () {
   const REDIRECTS = {
     "admin-matching.html": "admin-operaciones.html",
+    "admin-reportes.html": "admin-usuarios.html",
     "citizen-resumen.html": "citizen-reporte.html",
     "citizen-mascotas.html": "citizen-reporte.html",
     "citizen-fotos.html": "citizen-reporte.html"
@@ -11,8 +12,7 @@
       { href: "admin-resumen.html", icon: "layout-dashboard", label: "Resumen", page: "resumen" }
     ]},
     { group: "Gestión", items: [
-      { href: "admin-usuarios.html", icon: "users", label: "Usuarios", page: "usuarios" },
-      { href: "admin-reportes.html", icon: "file-text", label: "Reportes", page: "reportes" },
+      { href: "admin-usuarios.html", icon: "contact-round", label: "Usuarios y reportes", page: "usuarios" },
       { href: "admin-capacity.html", icon: "users-round", label: "Capacidad", page: "capacity" }
     ]},
     { group: "Operaciones", items: [
@@ -40,8 +40,8 @@
 
   const ADMIN_TITLES = {
     resumen: "Resumen operativo",
-    usuarios: "Gestión de usuarios",
-    reportes: "Reportes",
+    usuarios: "Usuarios y reportes",
+    reportes: "Usuarios y reportes",
     mapa: "Mapa y zonas",
     operaciones: "Matching y operaciones",
     capacity: "Capacidad y refugios",
@@ -148,14 +148,14 @@
     const homeHref = pathTo("index.html");
     const logoSrc =
       window.SANOS_PATHS && typeof window.SANOS_PATHS.asset === "function"
-        ? window.SANOS_PATHS.asset("images/logo.svg")
-        : "./assets/images/logo.svg";
+        ? window.SANOS_PATHS.asset("images/logo.png")
+        : "./assets/images/logo.png";
 
     return `
       <aside class="dash-sidebar" id="dashSidebar">
         <div class="dash-sidebar__inner sidebar-card">
           <a class="dash-sidebar__brand sidebar-brand" href="${homeHref}">
-            <img class="brand-logo" src="${logoSrc}" alt="" width="48" height="48" />
+            <img class="brand-logo" src="${logoSrc}" alt="Sanos y Salvos" width="48" height="48" />
             <div>
               <strong>Sanos y salvos</strong>
               <span>${panelTitle}</span>
@@ -179,9 +179,12 @@
     if (!headerEnd) {
       endClone.className = "dash-header-end";
     }
-    // En ciudadano, el switch de tema queda solo en la barra lateral.
-    if (role === "citizen") {
-      endClone.querySelectorAll(".js-theme-toggle, .btn-theme").forEach((node) => node.remove());
+    // El switch de tema queda solo en la barra lateral.
+    endClone.querySelectorAll(".js-theme-toggle, .btn-theme").forEach((node) => node.remove());
+    if (role === "admin") {
+      endClone.querySelectorAll(".dash-user__avatar [data-lucide]").forEach((icon) => {
+        icon.setAttribute("data-lucide", "user-cog");
+      });
     }
     const navInClone = endClone.querySelector(".dash-nav");
     if (navInClone) navInClone.remove();
@@ -270,7 +273,20 @@
     }
   }
 
+  function ensureFavicon() {
+    if (document.querySelector('link[rel="icon"]')) return;
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.type = "image/png";
+    link.href =
+      window.SANOS_PATHS && typeof window.SANOS_PATHS.asset === "function"
+        ? window.SANOS_PATHS.asset("images/favicon.png")
+        : "./assets/images/favicon.png";
+    document.head.appendChild(link);
+  }
+
   function applyLayoutAndHash() {
+    ensureFavicon();
     applyLayout();
     scrollToHash();
   }

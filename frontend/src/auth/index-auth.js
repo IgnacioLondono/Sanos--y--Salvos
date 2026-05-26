@@ -9,26 +9,13 @@
     email: document.getElementById("email"),
     password: document.getElementById("password"),
     btnLogin: document.getElementById("btnLogin"),
-    authStatus: document.getElementById("authStatus"),
-    authCard: document.querySelector(".auth-card-min")
+    authStatus: document.getElementById("authStatus")
   };
 
   init();
 
   function init() {
     handleLogoutQuery();
-
-    const citizenSession = core.readSession("citizen");
-    const adminSession = core.readSession("admin");
-    const active = citizenSession.token
-      ? { type: "citizen", session: citizenSession }
-      : adminSession.token
-        ? { type: "admin", session: adminSession }
-        : null;
-
-    if (active) {
-      renderActiveSessionNotice(active);
-    }
 
     if (els.btnLogin) {
       els.btnLogin.addEventListener("click", onLogin);
@@ -45,31 +32,12 @@
     core.clearSession("admin");
     window.history.replaceState({}, "", (window.SANOS_PATHS && SANOS_PATHS.index()) || "./index.html");
     if (els.authStatus) {
-      showStatus("Sesión cerrada. Puedes iniciar sesión de nuevo.");
-    }
-  }
-
-  function renderActiveSessionNotice(active) {
-    const user = active.session.user || {};
-    const name = user.displayName || user.email || "tu cuenta";
-    const dashboard =
-      active.type === "admin"
-        ? (window.SANOS_PATHS ? SANOS_PATHS.page("admin-resumen.html") : "./pages/admin/admin-resumen.html")
-        : (window.SANOS_PATHS ? SANOS_PATHS.page("citizen-reporte.html") : "./pages/citizen/citizen-reporte.html");
-    const roleLabel = active.type === "admin" ? "Administrador" : "Ciudadano";
-
-    const notice = document.createElement("div");
-    notice.className = "auth-session-notice";
-    notice.setAttribute("role", "status");
-    notice.innerHTML =
-      `<p><strong>Ya tienes sesión activa</strong> (${core.escapeHtml(roleLabel)}: ${core.escapeHtml(name)}).</p>` +
-      `<div class="auth-session-notice__actions">` +
-      `<a class="btn btn-primary" href="${dashboard}">Ir al panel</a>` +
-      `<a class="btn btn-secondary" href="${(window.SANOS_PATHS && SANOS_PATHS.index()) || "./index.html"}?logout=1">Cerrar sesión</a>` +
-      `</div>`;
-
-    if (els.authCard) {
-      els.authCard.insertBefore(notice, els.authCard.firstChild);
+      const reason = params.get("reason");
+      const msg =
+        reason === "session"
+          ? "Tu sesión expiró o no es válida. Inicia sesión de nuevo para publicar en el foro."
+          : "Sesión cerrada. Puedes iniciar sesión de nuevo.";
+      showStatus(msg);
     }
   }
 

@@ -93,6 +93,16 @@ public class ReportService {
         });
     }
 
+    @Transactional
+    public boolean delete(Long id) {
+        if (id == null || !reporteRepo.existsById(id)) {
+            return false;
+        }
+        detalleRepo.findByIdReporte(id).ifPresent(detalleRepo::delete);
+        reporteRepo.deleteById(id);
+        return true;
+    }
+
     private ReportDto toDto(ReporteEvento r) {
         if (r == null) {
             return null;

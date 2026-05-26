@@ -12,21 +12,27 @@ public class MensajeForo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_mensaje")
+    @Schema(description = "PK mensajes_foro.id_mensaje", accessMode = Schema.AccessMode.READ_ONLY)
     private Long idMensaje;
 
     @Column(name = "id_hilo", nullable = false)
+    @Schema(description = "FK hilos_foro.id_hilo", example = "1")
     private Long idHilo;
 
     @Column(nullable = false, columnDefinition = "TEXT")
+    @Schema(description = "Texto del mensaje")
     private String contenido;
 
     @Column(name = "id_usuario")
+    @Schema(description = "FK usuario IAM")
     private Long idUsuario;
 
     @Column(name = "nombre_autor", length = 120)
+    @Schema(description = "Nombre visible del autor")
     private String nombreAutor;
 
     @Column(name = "fecha_creacion")
+    @Schema(description = "Fecha de publicacion", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime fechaCreacion;
 
     @PrePersist

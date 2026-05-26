@@ -1,6 +1,7 @@
 package com.sanos.reportsservice.controller;
 
 import com.sanos.reportsservice.dto.ReportDto;
+import com.sanos.reportsservice.dto.UpdateStatusRequest;
 import com.sanos.reportsservice.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -72,6 +73,19 @@ public class ReportController {
         return service.findByStatus(status);
     }
 
+    @Operation(summary = "Eliminar reporte", description = "Elimina el reporte y su detalle asociado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Eliminado"),
+            @ApiResponse(responseCode = "404", description = "Reporte no existe")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @Parameter(description = "id_reporte", required = true) @PathVariable Long id) {
+        return service.delete(id)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.notFound().build();
+    }
+
     @Operation(summary = "Actualizar estado", description = "PATCH: cuerpo JSON {\"status\":\"...\"} actualiza detalle y cabecera.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ReportDto.class))),
@@ -81,11 +95,12 @@ public class ReportController {
     public ResponseEntity<ReportDto> updateStatus(
             @Parameter(description = "id_reporte", required = true) @PathVariable Long id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "JSON con clave \"status\" (nuevo estado). Ejemplo: {\"status\":\"OPEN\"}",
                     required = true,
-                    content = @Content(schema = @Schema(example = "{\"status\":\"OPEN\"}")))
-            @RequestBody Map<String, String> payload) {
-        String newStatus = payload.getOrDefault("status", "ABIERTO");
+                    content = @Content(schema = @Schema(implementation = UpdateStatusRequest.class)))
+            @RequestBody UpdateStatusRequest payload) {
+        String newStatus = payload.status() != null && !payload.status().isBlank()
+                ? payload.status()
+                : "ABIERTO";
         return service.updateStatus(id, newStatus)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

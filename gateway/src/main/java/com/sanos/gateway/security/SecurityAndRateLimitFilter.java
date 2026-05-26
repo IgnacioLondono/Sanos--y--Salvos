@@ -47,6 +47,7 @@ public class SecurityAndRateLimitFilter implements GlobalFilter, Ordered {
             "/api/audit/health",
             "/api/forum/health",
             "/api/bff/health",
+            "/api/gateway/health",
             "/actuator/health"
     );
 

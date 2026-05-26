@@ -40,3 +40,13 @@ management:
 services:
   reportsUrl: ${REPORTS_SERVICE_URL:http://localhost:8093}
   petCatalogUrl: ${PET_CATALOG_SERVICE_URL:http://localhost:8092}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  show-actuator: false
+  packages-to-scan: com.sanos.matchingservice.controller, com.sanos.matchingservice.dto, com.sanos.matchingservice.model

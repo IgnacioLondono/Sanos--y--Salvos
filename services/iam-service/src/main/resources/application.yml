@@ -41,3 +41,13 @@ sanos:
     password: Admin#Sanos2026
     display-name: Administrador Sanos y Salvos
     rut: 11111111-1
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  show-actuator: false
+  packages-to-scan: com.sanos.iamservice.controller, com.sanos.iamservice.dto

@@ -124,6 +124,37 @@ public class IamController {
         }
     }
 
+    @Operation(summary = "Crear administrador (solo ADMIN)", description = "Registra un usuario nuevo con rol ADMIN.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Administrador creado",
+                    content = @Content(schema = @Schema(implementation = UserDto.class))),
+            @ApiResponse(responseCode = "400", description = "Datos invalidos",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
+            @ApiResponse(responseCode = "401", description = "Token ausente o invalido",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class))),
+            @ApiResponse(responseCode = "409", description = "Correo o RUT duplicado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorDto.class)))
+    })
+    @PostMapping("/admin/users")
+    public ResponseEntity<?> createAdmin(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = AdminCreateRequest.class)))
+            @RequestBody AdminCreateRequest req) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Token requerido"));
+        }
+        try {
+            UserDto dto = authService.registerAdmin(authorization.substring(7), req);
+            return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
+
     @Operation(summary = "Listar usuarios", description = "Devuelve todos los usuarios con contacto; requiere JWT en gateway.")
     @ApiResponse(responseCode = "200", description = "Lista de UserDto",
             content = @Content(schema = @Schema(implementation = UserDto.class)))

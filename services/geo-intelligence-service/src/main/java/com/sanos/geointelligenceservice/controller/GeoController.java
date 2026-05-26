@@ -64,6 +64,7 @@ public class GeoController {
     }
 
     @Operation(summary = "Zonas por comuna", description = "Busqueda case-insensitive por nombre_comuna.")
+    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ZoneDto.class)))
     @GetMapping("/commune/{commune}")
     public List<ZoneDto> byCommune(
             @Parameter(description = "Nombre comuna", example = "Providencia", required = true) @PathVariable String commune) {
@@ -71,6 +72,13 @@ public class GeoController {
     }
 
     @Operation(summary = "Resumen por nivel de riesgo", description = "Conteo agrupado por nivel_riesgo.")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Mapa nivel_riesgo → cantidad",
+            content = @Content(schema = @Schema(
+                    type = "object",
+                    example = "{\"ALTO\":2,\"MEDIO\":5,\"BAJO\":1}",
+                    additionalProperties = Schema.AdditionalPropertiesValue.TRUE)))
     @GetMapping("/risk-summary")
     public Map<String, Long> riskSummary() {
         Map<String, Long> grouped = zoneRepo.findAll().stream()

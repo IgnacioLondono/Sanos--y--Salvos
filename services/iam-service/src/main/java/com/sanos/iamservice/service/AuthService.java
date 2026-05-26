@@ -62,7 +62,7 @@ public class AuthService {
         usuario.setContactoEmergenciaTelefono(req.emergencyContactPhone());
         usuario.setAceptoTerminos(Boolean.TRUE.equals(req.acceptedTerms()));
         usuario.setAceptoPrivacidad(Boolean.TRUE.equals(req.acceptedPrivacyPolicy()));
-        usuario.setRol(req.role() == null ? "CITIZEN" : req.role().toUpperCase());
+        usuario.setRol("CITIZEN");
         usuario.setFechaRegistro(LocalDateTime.now());
         usuario = usuarioRepo.save(usuario);
 
@@ -75,6 +75,70 @@ public class AuthService {
         Credencial credencial = new Credencial();
         credencial.setIdUsuario(usuario.getIdUsuario());
         credencial.setPasswordHash(passwordEncoder.encode(req.password()));
+        credencial.setEstadoCuenta("ACTIVA");
+        credencialRepo.save(credencial);
+
+        return UserDto.fromEntities(usuario, contacto);
+    }
+
+    @Transactional
+    public UserDto registerAdmin(String bearerToken, AdminCreateRequest req) {
+        requireAdminToken(bearerToken);
+        if (req == null || req.email() == null || req.password() == null || req.fullName() == null) {
+            throw new IllegalArgumentException("nombre, correo y contrasena son obligatorios");
+        }
+        if (req.rutDocument() == null || req.rutDocument().isBlank()) {
+            throw new IllegalArgumentException("RUT obligatorio");
+        }
+
+        RegisterRequest registerRequest = new RegisterRequest(
+                req.fullName().trim(),
+                req.rutDocument().trim(),
+                req.email().trim(),
+                req.password(),
+                req.fullName().trim(),
+                req.commune() == null || req.commune().isBlank() ? "Santiago" : req.commune().trim(),
+                req.phone() == null || req.phone().isBlank() ? "+56 9 0000 0000" : req.phone().trim(),
+                "Administracion Sanos y Salvos",
+                "Soporte",
+                "+56 2 2000 0000",
+                true,
+                true,
+                "ADMIN"
+        );
+
+        String email = registerRequest.email().trim().toLowerCase();
+        if (contactoRepo.findByCorreoElectronico(email).isPresent()) {
+            throw new IllegalStateException("El correo ya esta registrado");
+        }
+
+        String rut = normalizeRut(registerRequest.rutDocument());
+        if (rut != null && usuarioRepo.findByRutDocumento(rut).isPresent()) {
+            throw new IllegalStateException("El RUT ya esta registrado");
+        }
+
+        Usuario usuario = new Usuario();
+        usuario.setRutDocumento(rut);
+        usuario.setNombreCompleto(registerRequest.fullName());
+        usuario.setComuna(registerRequest.commune());
+        usuario.setDireccion(registerRequest.address());
+        usuario.setContactoEmergenciaNombre(registerRequest.emergencyContactName());
+        usuario.setContactoEmergenciaTelefono(registerRequest.emergencyContactPhone());
+        usuario.setAceptoTerminos(true);
+        usuario.setAceptoPrivacidad(true);
+        usuario.setRol("ADMIN");
+        usuario.setFechaRegistro(LocalDateTime.now());
+        usuario = usuarioRepo.save(usuario);
+
+        ContactoUsuario contacto = new ContactoUsuario();
+        contacto.setIdUsuario(usuario.getIdUsuario());
+        contacto.setCorreoElectronico(email);
+        contacto.setTelefonoPrincipal(registerRequest.phone());
+        contacto = contactoRepo.save(contacto);
+
+        Credencial credencial = new Credencial();
+        credencial.setIdUsuario(usuario.getIdUsuario());
+        credencial.setPasswordHash(passwordEncoder.encode(registerRequest.password()));
         credencial.setEstadoCuenta("ACTIVA");
         credencialRepo.save(credencial);
 

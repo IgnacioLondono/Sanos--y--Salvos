@@ -83,14 +83,45 @@
     window.localStorage.removeItem(key);
   }
 
+  function normalizeToken(token) {
+    if (!token) return "";
+    let value = String(token).trim();
+    if (/^bearer\s+/i.test(value)) {
+      value = value.replace(/^bearer\s+/i, "").trim();
+    }
+    return value;
+  }
+
+  function apiErrorMessage(status, path, data) {
+    if (status === 401) {
+      return "Sesión expirada o no válida. Cierra sesión e inicia de nuevo.";
+    }
+    return (
+      (data && data.error) ||
+      (typeof data === "string" ? data : "") ||
+      `Error ${status} en ${path}`
+    );
+  }
+
+  function isUnauthorizedError(error) {
+    return Boolean(error && (error.status === 401 || /401/.test(String(error.message || ""))));
+  }
+
+  function redirectToLogin(reason) {
+    const base = indexUrl();
+    const q = reason ? `?logout=1&reason=${encodeURIComponent(reason)}` : "?logout=1";
+    window.location.href = `${base}${q}`;
+  }
+
   async function api(path, options) {
     const opts = options || {};
     const settings = loadSettings();
     const method = opts.method || "GET";
     const headers = { "Content-Type": "application/json" };
+    const token = normalizeToken(opts.token);
 
-    if (opts.auth !== false && opts.token) {
-      headers.Authorization = `Bearer ${opts.token}`;
+    if (opts.auth !== false && token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
     let response;
@@ -118,11 +149,11 @@
     }
 
     if (!response.ok) {
-      const message =
-        (data && data.error) ||
-        (typeof data === "string" ? data : "") ||
-        `Error ${response.status} en ${path}`;
-      throw new Error(message);
+      const message = apiErrorMessage(response.status, path, data);
+      const error = new Error(message);
+      error.status = response.status;
+      error.path = path;
+      throw error;
     }
 
     return data;
@@ -134,12 +165,27 @@
 
   function mediaUrl(pathOrUrl) {
     if (!pathOrUrl) return "";
-    const value = String(pathOrUrl);
+    let value = String(pathOrUrl).trim();
+    if (!value) return "";
+
     if (value.startsWith("http://") || value.startsWith("https://")) {
       return value;
     }
+
     const base = getApiBaseUrl();
-    return value.startsWith("/") ? `${base}${value}` : `${base}/${value}`;
+    if (value.startsWith("/")) {
+      return `${base}${value}`;
+    }
+    if (value.startsWith("api/")) {
+      return `${base}/${value}`;
+    }
+    return `${base}/${value}`;
+  }
+
+  function mediaSrcAttr(pathOrUrl) {
+    const resolved = mediaUrl(pathOrUrl);
+    if (!resolved) return "";
+    return resolved.replace(/"/g, "%22").replace(/'/g, "%27");
   }
 
   async function apiUpload(path, formData, options) {
@@ -147,8 +193,10 @@
     const settings = loadSettings();
     const headers = {};
 
-    if (opts.auth !== false && opts.token) {
-      headers.Authorization = `Bearer ${opts.token}`;
+    const token = normalizeToken(opts.token);
+
+    if (opts.auth !== false && token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
     let response;
@@ -176,11 +224,11 @@
     }
 
     if (!response.ok) {
-      const message =
-        (data && data.error) ||
-        (typeof data === "string" ? data : "") ||
-        `Error ${response.status} en ${path}`;
-      throw new Error(message);
+      const message = apiErrorMessage(response.status, path, data);
+      const error = new Error(message);
+      error.status = response.status;
+      error.path = path;
+      throw error;
     }
 
     return data;
@@ -213,6 +261,132 @@
     return date.toLocaleString();
   }
 
+  function mediaItemUrl(item) {
+    if (!item) return "";
+    return item.url || item.publicUrl || item.storageUrl || "";
+  }
+
+  function indexMediaByReportAndPet(mediaList) {
+    const byReport = Object.create(null);
+    const byPet = Object.create(null);
+
+    (mediaList || []).forEach((item) => {
+      const url = mediaItemUrl(item);
+      if (!url) return;
+      const reportId = Number(item.reportId);
+      const petId = Number(item.petId);
+      if (Number.isFinite(reportId) && reportId > 0) {
+        if (!byReport[reportId]) byReport[reportId] = [];
+        byReport[reportId].push(item);
+      }
+      if (Number.isFinite(petId) && petId > 0) {
+        if (!byPet[petId]) byPet[petId] = [];
+        byPet[petId].push(item);
+      }
+    });
+
+    return {
+      byReport,
+      byPet,
+      imageForReport(report) {
+        const reportId = Number(report && report.id);
+        const petId = Number(report && report.petId);
+        const fromReport = byReport[reportId];
+        if (fromReport && fromReport.length) return mediaItemUrl(fromReport[0]);
+        const fromPet = byPet[petId];
+        if (fromPet && fromPet.length) return mediaItemUrl(fromPet[0]);
+        return "";
+      }
+    };
+  }
+
+  function reportTypeLabel(type) {
+    const t = String(type || "").toUpperCase();
+    if (t === "LOST" || t === "PERDIDA") return "Perdida";
+    if (t === "FOUND" || t === "ENCONTRADA") return "Encontrada";
+    return type || "—";
+  }
+
+  function reportStatusLabel(status) {
+    const s = String(status || "").toUpperCase();
+    if (s === "OPEN" || s === "ABIERTO") return "Abierto";
+    if (s === "CLOSED" || s === "CERRADO") return "Cerrado";
+    if (s === "RESOLVED" || s === "RESUELTO") return "Resuelto";
+    return status || "—";
+  }
+
+  function petNameById(petId, pets) {
+    const list = pets || [];
+    const pet = list.find((p) => String(p.id) === String(petId));
+    if (!pet) return petId ? `#${petId}` : "—";
+    return pet.name ? String(pet.name) : `#${pet.id}`;
+  }
+
+  function buildMapReportPopup(report, options) {
+    const opts = options || {};
+    const imageUrl = opts.imageUrl || "";
+    const showId = opts.showId !== false;
+    const petName = opts.petName || "";
+    const typeLabel = reportTypeLabel(report.type);
+    const typeKey = String(report.type || "").toUpperCase();
+    const badgeClass =
+      typeKey === "LOST" || typeKey === "PERDIDA"
+        ? "map-report-popup__badge--lost"
+        : typeKey === "FOUND" || typeKey === "ENCONTRADA"
+          ? "map-report-popup__badge--found"
+          : "map-report-popup__badge--default";
+
+    const hasImg = Boolean(imageUrl);
+    const imgHtml = hasImg
+      ? `<div class="map-report-popup__media"><img src="${mediaSrcAttr(imageUrl)}" alt="" loading="lazy" decoding="async" class="map-report-popup__img" onerror="this.closest('.map-report-popup').classList.remove('map-report-popup--has-img');this.parentElement.remove();" /></div>`
+      : "";
+
+    const idHtml = showId
+      ? `<span class="map-report-popup__id">#${escapeHtml(String(report.id || "-"))}</span>`
+      : "";
+
+    const titleHtml = petName
+      ? `<span class="map-report-popup__pet">${escapeHtml(petName)}</span>`
+      : "";
+
+    const metaParts = [
+      report.commune || "Sin comuna",
+      reportStatusLabel(report.status),
+      report.healthStatus || ""
+    ].filter(Boolean);
+    const metaLine = metaParts.join(" · ");
+
+    const descHtml = report.description
+      ? `<p class="map-report-popup__desc">${escapeHtml(truncate(report.description, 72))}</p>`
+      : "";
+
+    const dateHtml = report.createdAt
+      ? `<p class="map-report-popup__date">${escapeHtml(formatDate(report.createdAt))}</p>`
+      : "";
+
+    const layoutClass = hasImg ? " map-report-popup--has-img" : "";
+
+    return `<div class="map-report-popup${layoutClass}">
+      ${imgHtml}
+      <div class="map-report-popup__body">
+        <div class="map-report-popup__head">
+          <span class="map-report-popup__badge ${badgeClass}">${escapeHtml(typeLabel)}</span>
+          ${titleHtml}
+          ${idHtml}
+        </div>
+        <p class="map-report-popup__meta-line">${escapeHtml(metaLine)}</p>
+        ${descHtml}
+        ${dateHtml}
+      </div>
+    </div>`;
+  }
+
+  const mapReportPopupLeafletOpts = {
+    maxWidth: 220,
+    minWidth: 180,
+    className: "map-report-popup-wrap"
+  };
+
   function refreshIcons() {
     if (window.lucide && typeof lucide.createIcons === "function") {
       lucide.createIcons();
@@ -244,10 +418,21 @@
     readSession,
     writeSession,
     clearSession,
+    normalizeToken,
+    isUnauthorizedError,
+    redirectToLogin,
     api,
     apiUpload,
     getApiBaseUrl,
     mediaUrl,
+    mediaSrcAttr,
+    mediaItemUrl,
+    indexMediaByReportAndPet,
+    reportTypeLabel,
+    reportStatusLabel,
+    petNameById,
+    buildMapReportPopup,
+    mapReportPopupLeafletOpts,
     escapeHtml,
     truncate,
     formatDate,

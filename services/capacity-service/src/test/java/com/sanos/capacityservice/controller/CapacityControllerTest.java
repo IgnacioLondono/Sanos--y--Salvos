@@ -71,11 +71,11 @@ class CapacityControllerTest {
                 team(3L, "Providencia", 7, null)
         ));
 
-        Map<String, Object> summary = controller.summary();
+        var summary = controller.summary();
 
-        assertEquals(3, summary.get("teams"));
-        assertEquals(17, summary.get("volunteers"));
-        assertEquals(25, summary.get("hoursAvailable"));
+        assertEquals(3, summary.teams());
+        assertEquals(17, summary.volunteers());
+        assertEquals(25, summary.hoursAvailable());
     }
 
     @Test

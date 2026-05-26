@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usuarios | Admin</title>
+  <title>Usuarios y reportes | Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -32,10 +32,9 @@
       <button class="modal-close" type="button" id="btnCloseProfile" aria-label="Cerrar">
         <i data-lucide="x" aria-hidden="true"></i>
       </button>
-      
       <div class="profile-header">
         <div class="profile-avatar-large">
-          <i data-lucide="shield" aria-hidden="true"></i>
+          <i data-lucide="user-cog" aria-hidden="true"></i>
         </div>
         <div>
           <h2 id="profileDisplayName" class="profile-name">Admin</h2>
@@ -43,7 +42,6 @@
           <span id="profileRole" class="badge badge-admin">Administrador</span>
         </div>
       </div>
-
       <div class="profile-section">
         <h3>Información</h3>
         <div class="profile-info-grid">
@@ -57,7 +55,6 @@
           </div>
         </div>
       </div>
-
       <div class="profile-footer">
         <button id="btnProfileLogout" class="btn btn-primary" type="button" style="width: 100%;">
           <i data-lucide="log-out" aria-hidden="true"></i>
@@ -67,11 +64,118 @@
     </div>
   </div>
 
+  <!-- Modal reportes del usuario -->
+  <div id="userReportsModal" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content modal-user-reports glass-card" role="dialog" aria-labelledby="userReportsTitle">
+      <button class="modal-close" type="button" id="btnCloseUserReports" aria-label="Cerrar">
+        <i data-lucide="x" aria-hidden="true"></i>
+      </button>
+
+      <div class="user-reports-modal__head">
+        <div class="user-reports-modal__avatar" aria-hidden="true">
+          <i data-lucide="contact-round"></i>
+        </div>
+        <div>
+          <h2 id="userReportsTitle" class="user-reports-modal__name">Usuario</h2>
+          <p id="userReportsEmail" class="user-reports-modal__email">—</p>
+          <span id="userReportsRole" class="badge badge-primary">CITIZEN</span>
+        </div>
+      </div>
+
+      <div class="user-reports-modal__filters">
+        <label class="field field--compact">
+          <span>Buscar</span>
+          <input type="search" id="userReportsSearch" placeholder="Descripción, comuna, ID…" />
+        </label>
+        <label class="field field--compact">
+          <span>Tipo</span>
+          <select id="userReportsType">
+            <option value="">Todos</option>
+            <option value="LOST">Perdida</option>
+            <option value="FOUND">Encontrada</option>
+            <option value="PERDIDA">Perdida (legacy)</option>
+            <option value="ENCONTRADA">Encontrada (legacy)</option>
+          </select>
+        </label>
+        <label class="field field--compact">
+          <span>Estado</span>
+          <select id="userReportsStatus">
+            <option value="">Todos</option>
+            <option value="OPEN">Abierto</option>
+            <option value="ABIERTO">Abierto (legacy)</option>
+            <option value="CLOSED">Cerrado</option>
+            <option value="CERRADO">Cerrado (legacy)</option>
+          </select>
+        </label>
+        <label class="field field--compact">
+          <span>Comuna</span>
+          <input type="text" id="userReportsCommune" placeholder="Filtrar comuna" />
+        </label>
+      </div>
+
+      <div id="userReportsList" class="user-reports-list" aria-live="polite"></div>
+      <p id="userReportsEmpty" class="profile-history-empty hidden">Este usuario no tiene reportes.</p>
+    </div>
+  </div>
+
+  <!-- Modal crear administrador -->
+  <div id="createAdminModal" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content modal-create-admin glass-card" role="dialog" aria-labelledby="createAdminTitle">
+      <button class="modal-close" type="button" id="btnCloseCreateAdmin" aria-label="Cerrar">
+        <i data-lucide="x" aria-hidden="true"></i>
+      </button>
+      <div class="modal-create-admin__head">
+        <div class="modal-create-admin__icon" aria-hidden="true">
+          <i data-lucide="shield-plus"></i>
+        </div>
+        <div>
+          <h2 id="createAdminTitle">Nuevo administrador</h2>
+          <p class="modal-create-admin__lead">Crea una cuenta admin nueva (no modifica al usuario del listado).</p>
+        </div>
+      </div>
+      <form id="createAdminForm" class="modal-create-admin__form" novalidate>
+        <div class="report-form__grid report-form__grid--wide">
+          <label class="field field-span-2">
+            <span>Nombre completo</span>
+            <input type="text" id="adminFullName" required autocomplete="name" />
+          </label>
+          <label class="field">
+            <span>RUT</span>
+            <input type="text" id="adminRut" placeholder="12345678-9" required />
+          </label>
+          <label class="field">
+            <span>Comuna</span>
+            <input type="text" id="adminCommune" placeholder="Santiago" />
+          </label>
+          <label class="field field-span-2">
+            <span>Correo</span>
+            <input type="email" id="adminEmail" required autocomplete="email" />
+          </label>
+          <label class="field">
+            <span>Teléfono</span>
+            <input type="tel" id="adminPhone" placeholder="+56 9 1234 5678" />
+          </label>
+          <label class="field">
+            <span>Contraseña</span>
+            <input type="password" id="adminPassword" required autocomplete="new-password" minlength="10" />
+          </label>
+        </div>
+        <div class="modal-create-admin__actions">
+          <button type="button" class="btn btn-ghost" id="btnCancelCreateAdmin">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i data-lucide="user-plus" aria-hidden="true"></i>
+            Crear administrador
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="dash-root">
     <header class="dash-header">
       <div class="dash-header-inner">
         <a class="dash-brand" href="../../index.html">
-          <img class="dash-brand__logo" src="../../assets/images/logo.svg" alt="" width="46" height="46" />
+          <img class="dash-brand__logo" src="../../assets/images/logo.png" alt="" width="46" height="46" />
           <div class="dash-brand__text">
             <span class="dash-brand__kicker">Sanos y salvos</span>
             <strong class="dash-brand__title">Admin</strong>
@@ -79,8 +183,7 @@
         </a>
         <nav class="dash-nav" aria-label="Admin">
           <a class="sidebar-link dash-nav__link" href="admin-resumen.html"><i data-lucide="activity" class="sidebar-link-icon" aria-hidden="true"></i>Resumen</a>
-          <a class="sidebar-link dash-nav__link" href="admin-usuarios.html"><i data-lucide="users" class="sidebar-link-icon" aria-hidden="true"></i>Usuarios</a>
-          <a class="sidebar-link dash-nav__link" href="admin-reportes.html"><i data-lucide="file-text" class="sidebar-link-icon" aria-hidden="true"></i>Reportes</a>
+          <a class="sidebar-link dash-nav__link" href="admin-usuarios.html"><i data-lucide="contact-round" class="sidebar-link-icon" aria-hidden="true"></i>Usuarios</a>
           <a class="sidebar-link dash-nav__link" href="admin-capacity.html"><i data-lucide="users-round" class="sidebar-link-icon" aria-hidden="true"></i>Capacity</a>
           <a class="sidebar-link dash-nav__link" href="admin-mapa.html"><i data-lucide="map" class="sidebar-link-icon" aria-hidden="true"></i>Mapa</a>
           <a class="sidebar-link dash-nav__link" href="admin-matching.html"><i data-lucide="sparkles" class="sidebar-link-icon" aria-hidden="true"></i>Matching</a>
@@ -92,7 +195,7 @@
             <i data-lucide="sun" class="btn-theme__icon-light" aria-hidden="true"></i>
           </button>
           <div class="dash-user">
-            <div class="dash-user__avatar" aria-hidden="true"><i data-lucide="shield"></i></div>
+            <div class="dash-user__avatar" aria-hidden="true"><i data-lucide="user-cog"></i></div>
             <div class="dash-user__meta">
               <div class="dash-user__name" id="adminIdentity">—</div>
               <span class="sync-pill" id="adminStatus" role="status"></span>
@@ -111,20 +214,26 @@
       <section class="glass-card section reveal">
         <div class="section-head-min">
           <div class="section-head-min__title">
-            <i data-lucide="users" aria-hidden="true"></i>
-            <h2>Gestión de Usuarios</h2>
+            <i data-lucide="contact-round" aria-hidden="true"></i>
+            <h2>Usuarios y reportes</h2>
           </div>
           <div class="operation-toolbar">
+            <label class="field field--inline">
+              <span class="sr-only">Buscar usuario</span>
+              <input type="search" id="usersSearch" placeholder="Buscar por nombre o correo…" />
+            </label>
+            <button class="btn btn-primary" type="button" id="btnOpenCreateAdmin">
+              <i data-lucide="shield-plus" aria-hidden="true"></i>
+              Nuevo administrador
+            </button>
             <button class="btn btn-secondary" type="button" id="btnRefreshUsers">
               <i data-lucide="refresh-cw" aria-hidden="true"></i>
               Actualizar
             </button>
           </div>
         </div>
-        
-        <div id="usersContainer" class="users-grid">
-          <!-- Las tarjetas de usuarios se cargarán aquí -->
-        </div>
+
+        <div id="usersContainer" class="users-grid"></div>
       </section>
     </main>
   </div>

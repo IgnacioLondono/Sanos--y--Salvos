@@ -12,24 +12,31 @@ public class HiloForo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_hilo")
+    @Schema(description = "PK hilos_foro.id_hilo", accessMode = Schema.AccessMode.READ_ONLY)
     private Long idHilo;
 
     @Column(nullable = false, length = 200)
+    @Schema(description = "Titulo del hilo", example = "Perdi a mi perro en Providencia")
     private String titulo;
 
     @Column(nullable = false, length = 32)
+    @Schema(description = "Categoria", example = "PERDIDAS")
     private String categoria;
 
     @Column(name = "id_usuario")
+    @Schema(description = "FK usuario IAM", example = "2")
     private Long idUsuario;
 
     @Column(name = "nombre_autor", length = 120)
+    @Schema(description = "Nombre visible del autor")
     private String nombreAutor;
 
     @Column(name = "fecha_creacion")
+    @Schema(description = "Fecha de creacion", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime fechaCreacion;
 
     @Column(name = "fecha_actualizacion")
+    @Schema(description = "Ultima actividad", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime fechaActualizacion;
 
     @PrePersist

@@ -195,6 +195,9 @@ a {
 
 .sidebar-brand .brand-logo {
   width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .sidebar-brand strong {
@@ -357,7 +360,9 @@ a {
 .brand-logo {
   width: 112px;
   flex: 0 0 auto;
-  filter: drop-shadow(0 16px 36px rgba(67, 56, 202, 0.16));
+  border-radius: 50%;
+  object-fit: cover;
+  filter: drop-shadow(0 16px 36px rgba(45, 145, 86, 0.18));
 }
 
 h1,
@@ -1214,10 +1219,12 @@ svg.lucide {
 }
 
 .auth-brand-ico img.brand-logo {
-  width: 28px;
-  height: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
   filter: none;
-  box-shadow: none;
+  box-shadow: 0 4px 14px rgba(45, 145, 86, 0.2);
 }
 
 .auth-headline {
@@ -1714,11 +1721,11 @@ svg.lucide {
 .dash-brand__logo {
   width: 46px;
   height: 46px;
-  border-radius: 14px;
-  object-fit: contain;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(45, 212, 191, 0.2));
-  padding: 6px;
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
+  border-radius: 50%;
+  object-fit: cover;
+  background: transparent;
+  padding: 0;
+  box-shadow: 0 4px 16px rgba(45, 145, 86, 0.22);
 }
 
 .dash-brand__kicker {

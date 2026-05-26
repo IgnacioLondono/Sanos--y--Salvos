@@ -41,6 +41,7 @@ public class MatchingController {
     public MatchDto manualCreate(@RequestBody MatchDto req) { return engine.manualCreate(req); }
 
     @Operation(summary = "Matches por reporte", description = "Donde reporte aparece como perdida o hallazgo.")
+    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = MatchDto.class)))
     @GetMapping("/report/{reportId}")
     public List<MatchDto> byReport(
             @Parameter(description = "id_reporte", required = true) @PathVariable Long reportId) {

@@ -1,11 +1,11 @@
-﻿<!-- Admin Usuarios Page - Componente de GestiÃ³n -->
+<!-- Admin Usuarios Page - Componente de Gestión -->
 
-<!-- Ejemplo de cÃ³mo renderizan las tarjetas de usuarios en el grid -->
+<!-- Ejemplo de cómo renderizan las tarjetas de usuarios en el grid -->
 <div class="user-card">
   <div class="user-card-header">
-    <div class="user-avatar">ðŸ‘¤</div>
+    <div class="user-avatar">👤</div>
     <div class="user-info">
-      <p class="user-name">Juan PÃ©rez</p>
+      <p class="user-name">Juan Pérez</p>
       <p class="user-role">Ciudadano</p>
     </div>
     <div class="user-actions">
@@ -24,7 +24,7 @@
       <span class="user-stat-value">juan@ejemplo.cl</span>
     </div>
     <div class="user-stat">
-      <span class="user-stat-label">TelÃ©fono:</span>
+      <span class="user-stat-label">Teléfono:</span>
       <span class="user-stat-value">+56 9 1234 5678</span>
     </div>
     <div class="user-stat">
@@ -38,11 +38,11 @@
   </div>
 </div>
 
-<!-- Ejemplo de botones de operaciÃ³n -->
+<!-- Ejemplo de botones de operación -->
 <div class="operation-header">
   <h3>
     <i data-lucide="users" aria-hidden="true"></i>
-    GestiÃ³n de Usuarios
+    Gestión de Usuarios
   </h3>
   <div class="operation-toolbar">
     <button class="btn btn-action btn-action-add">
@@ -60,7 +60,7 @@
 <!-- Ejemplo de fila de datos en tabla/lista -->
 <div class="data-row">
   <div class="data-row-content">
-    <div class="data-row-title">MarÃ­a GonzÃ¡lez</div>
+    <div class="data-row-title">María González</div>
     <div class="data-row-meta">
       <span>maria@ejemplo.cl</span>
       <span>5 mascotas</span>
@@ -77,7 +77,7 @@
   </div>
 </div>
 
-<!-- Ejemplo: Modal de Perfil Abierto en PÃ¡gina -->
+<!-- Ejemplo: Modal de Perfil Abierto en Página -->
 <div class="modal-overlay">
   <div class="modal-content modal-profile glass-card">
     <button class="modal-close" type="button" aria-label="Cerrar">
@@ -90,38 +90,38 @@
         <i data-lucide="user"></i>
       </div>
       <div>
-        <h2 class="profile-name">MarÃ­a GarcÃ­a LÃ³pez</h2>
+        <h2 class="profile-name">María García López</h2>
         <p class="profile-email">maria@ejemplo.cl</p>
         <span class="badge badge-primary">Ciudadano</span>
       </div>
     </div>
 
-    <!-- SECCIÃ“N DE INFORMACIÃ“N PERSONAL -->
+    <!-- SECCIÓN DE INFORMACIÓN PERSONAL -->
     <div class="profile-section">
-      <h3>InformaciÃ³n Personal</h3>
+      <h3>Información Personal</h3>
       <div class="profile-info-grid">
         <div class="info-item">
           <span class="info-label">Nombre</span>
-          <p>MarÃ­a GarcÃ­a LÃ³pez</p>
+          <p>María García López</p>
         </div>
         <div class="info-item">
           <span class="info-label">Correo</span>
           <p>maria@ejemplo.cl</p>
         </div>
         <div class="info-item">
-          <span class="info-label">TelÃ©fono</span>
+          <span class="info-label">Teléfono</span>
           <p>+56 9 1234 5678</p>
         </div>
         <div class="info-item">
-          <span class="info-label">UbicaciÃ³n</span>
+          <span class="info-label">Ubicación</span>
           <p>Santiago, Chile</p>
         </div>
       </div>
     </div>
 
-    <!-- SECCIÃ“N DE ESTADÃSTICAS -->
+    <!-- SECCIÓN DE ESTADÍSTICAS -->
     <div class="profile-section">
-      <h3>EstadÃ­sticas</h3>
+      <h3>Estadísticas</h3>
       <div class="profile-stats-grid">
         <div class="stat-item">
           <strong>8</strong>
@@ -150,7 +150,7 @@
       </button>
       <button class="btn btn-ghost" type="button">
         <i data-lucide="settings"></i>
-        ConfiguraciÃ³n
+        Configuración
       </button>
     </div>
 
@@ -158,13 +158,13 @@
     <div class="profile-footer">
       <button class="btn btn-primary" type="button" style="width: 100%;">
         <i data-lucide="log-out"></i>
-        Cerrar SesiÃ³n
+        Cerrar Sesión
       </button>
     </div>
   </div>
 </div>
 
-<!-- JAVASCRIPT DE INTEGRACIÃ“N -->
+<!-- JAVASCRIPT DE INTEGRACIÓN -->
 <script>
 // Dentro de admin-dashboard.js o citizen-dashboard.js
 
@@ -178,7 +178,7 @@ async function loadUsers() {
     container.innerHTML = users.map(user => `
       <div class="user-card">
         <div class="user-card-header">
-          <div class="user-avatar">${user.displayName?.charAt(0) || 'ðŸ‘¤'}</div>
+          <div class="user-avatar">${user.displayName?.charAt(0) || '👤'}</div>
           <div class="user-info">
             <p class="user-name">${user.displayName}</p>
             <p class="user-role">${user.role}</p>
@@ -199,8 +199,8 @@ async function loadUsers() {
             <span class="user-stat-value">${user.email}</span>
           </div>
           <div class="user-stat">
-            <span class="user-stat-label">TelÃ©fono:</span>
-            <span class="user-stat-value">${user.phone || 'â€”'}</span>
+            <span class="user-stat-label">Teléfono:</span>
+            <span class="user-stat-value">${user.phone || '—'}</span>
           </div>
           <div class="user-stat">
             <span class="user-stat-label">Mascotas:</span>
@@ -225,7 +225,7 @@ async function addUser() {
   // Implementar modal para crear usuario
   const name = prompt('Nombre del usuario:');
   const email = prompt('Correo:');
-  const phone = prompt('TelÃ©fono:');
+  const phone = prompt('Teléfono:');
   
   if (name && email) {
     try {
@@ -252,7 +252,7 @@ async function editUser(userId) {
 
 // Eliminar usuario
 async function deleteUser(userId) {
-  if (confirm('Â¿EstÃ¡ seguro de que desea eliminar este usuario?')) {
+  if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
     try {
       const response = await fetch(`${config.API_URL}/users/${userId}`, {
         method: 'DELETE'
@@ -275,15 +275,15 @@ document.getElementById('btnRefreshUsers')?.addEventListener('click', loadUsers)
 loadUsers();
 </script>
 
-<!-- ESTILOS QUE SE APLICAN AUTOMÃTICAMENTE -->
+<!-- ESTILOS QUE SE APLICAN AUTOMÁTICAMENTE -->
 <style>
-/* Los estilos ya estÃ¡n en styles-enhanced.css:
+/* Los estilos ya están en styles-enhanced.css:
 
-1. Header mejorado con navegaciÃ³n
+1. Header mejorado con navegación
 2. Modal con animaciones suave
 3. Tarjetas de usuarios con hover effects
 4. Grid responsivo que se adapta a mobile
-5. Botones de acciÃ³n con colores diferenciados
+5. Botones de acción con colores diferenciados
 6. Soporte para tema oscuro/claro
 7. Animaciones de entrada y salida
 */

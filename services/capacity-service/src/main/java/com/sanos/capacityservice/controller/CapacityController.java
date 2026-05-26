@@ -1,6 +1,7 @@
 package com.sanos.capacityservice.controller;
 
 import com.sanos.capacityservice.dto.CapacityDto;
+import com.sanos.capacityservice.dto.CapacitySummaryDto;
 import com.sanos.capacityservice.model.EquipoColaboracion;
 import com.sanos.capacityservice.repository.EquipoColaboracionRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,6 +54,7 @@ public class CapacityController {
     }
 
     @Operation(summary = "Equipos por zona", description = "Filtra por zona_operacion (ignore case).")
+    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = CapacityDto.class)))
     @GetMapping("/zone/{zone}")
     public List<CapacityDto> byZone(
             @Parameter(description = "zona_operacion", required = true) @PathVariable String zone) {
@@ -60,16 +62,13 @@ public class CapacityController {
     }
 
     @Operation(summary = "Resumen agregado", description = "Totales: equipos, voluntarios, horas.")
+    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = CapacitySummaryDto.class)))
     @GetMapping("/summary")
-    public Map<String, Object> summary() {
+    public CapacitySummaryDto summary() {
         List<EquipoColaboracion> equipos = repo.findAll();
         int totalVoluntarios = equipos.stream().mapToInt(e -> e.getVoluntarios() == null ? 0 : e.getVoluntarios()).sum();
         int totalHoras = equipos.stream().mapToInt(e -> e.getHorasDisponibles() == null ? 0 : e.getHorasDisponibles()).sum();
-        return Map.of(
-                "teams", equipos.size(),
-                "volunteers", totalVoluntarios,
-                "hoursAvailable", totalHoras
-        );
+        return new CapacitySummaryDto(equipos.size(), totalVoluntarios, totalHoras);
     }
 
     @Operation(summary = "Salud del servicio")

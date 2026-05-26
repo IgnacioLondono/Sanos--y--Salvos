@@ -110,6 +110,30 @@ class ReportServiceTest {
     }
 
     @Test
+    void delete_removesDetailAndReport() {
+        DetalleReporte detalle = new DetalleReporte();
+        detalle.setIdReporte(300L);
+
+        when(reporteRepo.existsById(300L)).thenReturn(true);
+        when(detalleRepo.findByIdReporte(300L)).thenReturn(Optional.of(detalle));
+
+        assertTrue(service.delete(300L));
+
+        verify(detalleRepo).delete(detalle);
+        verify(reporteRepo).deleteById(300L);
+    }
+
+    @Test
+    void delete_returnsFalseWhenReportNotFound() {
+        when(reporteRepo.existsById(404L)).thenReturn(false);
+
+        assertFalse(service.delete(404L));
+
+        verify(detalleRepo, never()).delete(any());
+        verify(reporteRepo, never()).deleteById(any());
+    }
+
+    @Test
     void listAll_mapsNullCoordinatesToZero() {
         ReporteEvento rep = new ReporteEvento();
         rep.setIdReporte(1L);

@@ -40,3 +40,13 @@ management:
     web:
       exposure:
         include: health,info
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  show-actuator: false
+  packages-to-scan: com.sanos.mediaservice.controller, com.sanos.mediaservice.dto, com.sanos.mediaservice.model

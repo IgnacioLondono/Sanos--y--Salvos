@@ -53,6 +53,7 @@ public class AuditController {
     }
 
     @Operation(summary = "Logs por entidad")
+    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = AuditDto.class)))
     @GetMapping("/entity/{entity}")
     public List<AuditDto> byEntity(
             @Parameter(description = "Nombre entidad", required = true) @PathVariable String entity) {
@@ -60,6 +61,7 @@ public class AuditController {
     }
 
     @Operation(summary = "Logs por actor")
+    @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = AuditDto.class)))
     @GetMapping("/actor/{actor}")
     public List<AuditDto> byActor(
             @Parameter(description = "Actor", required = true) @PathVariable String actor) {

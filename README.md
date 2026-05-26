@@ -211,6 +211,16 @@ docker compose down
 docker compose down -v
 ```
 
+### Frontend como componente NPM
+
+El frontend incluye `frontend/package.json` para ejecución local estándar:
+
+```bash
+cd frontend
+npm install
+npm run start
+```
+
 ### Build optimizado (menos picos de CPU)
 
 En PowerShell, limita el paralelismo cuando quieras compilar todo el stack sin saturar la maquina:
@@ -304,16 +314,22 @@ frontend/
 
 ### Swagger por servicio
 
-- IAM: `:8091`
-- Pets: `:8092`
-- Reports: `:8093`
-- Geo: `:8094`
-- Media: `:8095`
-- Matching: `:8096`
-- Capacity: `:8097`
-- Audit: `:8098`
-- Forum: `:8099`
-- BFF: `:8081`
+Cada microservicio expone **OpenAPI 3** (`/v3/api-docs`) y **Swagger UI** con DTOs anotados (`@Schema`, `@Operation`, `@ApiResponse`).
+
+| Servicio | Puerto | Swagger UI | OpenAPI JSON |
+|---|---:|---|---|
+| IAM | 8091 | http://localhost:8091/swagger-ui/index.html | http://localhost:8091/v3/api-docs |
+| Catálogo mascotas | 8092 | http://localhost:8092/swagger-ui/index.html | http://localhost:8092/v3/api-docs |
+| Reportes | 8093 | http://localhost:8093/swagger-ui/index.html | http://localhost:8093/v3/api-docs |
+| Geo (zonas) | 8094 | http://localhost:8094/swagger-ui/index.html | http://localhost:8094/v3/api-docs |
+| Media | 8095 | http://localhost:8095/swagger-ui/index.html | http://localhost:8095/v3/api-docs |
+| Matching IA | 8096 | http://localhost:8096/swagger-ui/index.html | http://localhost:8096/v3/api-docs |
+| Capacity | 8097 | http://localhost:8097/swagger-ui/index.html | http://localhost:8097/v3/api-docs |
+| Auditoría | 8098 | http://localhost:8098/swagger-ui/index.html | http://localhost:8098/v3/api-docs |
+| Foro | 8099 | http://localhost:8099/swagger-ui/index.html | http://localhost:8099/v3/api-docs |
+| BFF | 8081 | http://localhost:8081/swagger-ui/index.html | http://localhost:8081/v3/api-docs |
+
+Vía gateway (selector de specs): rutas `/openapi/{servicio}/v3/api-docs` (ej. `/openapi/iam/v3/api-docs`).
 
 ### Autenticación
 
@@ -387,6 +403,23 @@ mvn -pl services/reports-service test
 mvn -pl services/forum-service test
 mvn -pl services/capacity-service test
 mvn -pl services/matching-service,services/media-service,services/audit-service,services/geo-intelligence-service test
+```
+
+### Cobertura con JaCoCo
+
+Se añadió `jacoco-maven-plugin` en BFF, Gateway y microservicios.  
+Para generar cobertura por módulo:
+
+```bash
+mvn -pl gateway verify
+mvn -pl bff verify
+mvn -pl services/reports-service verify
+```
+
+Reporte HTML por módulo:
+
+```text
+<modulo>/target/site/jacoco/index.html
 ```
 
 ### Objetivo académico sugerido
@@ -465,6 +498,12 @@ docker compose ps
 | `docs/RABBITMQ.md` | topología de eventos y validación demo |
 | `docs/XAMPP.md` | guía de ejecución local con Apache/MySQL |
 | `docs/FORO-TC.md` | especificación técnica del módulo foro |
+| `docs/ANALISIS_PATRONES_Y_ARQUETIPOS_P2.md` | análisis de patrones de diseño y arquetipos usados |
+| `docs/PLAN_BRANCHING_P2.md` | estrategia de branching para la entrega |
+| `docs/CHECKLIST_ENTREGA_PARCIAL2.md` | checklist final de cumplimiento de entregable |
+| `docs/SNIPPETS_DEFENSA_P2.md` | 3 snippets listos para defensa oral |
+| `arquetipos-maven/README.md` | guía de uso de plantillas base Maven |
+| `repositorios.txt` | enlaces de repositorio y descripción por componente |
 | `frontend/README.md` | estructura frontend, rutas y carga de scripts |
 
 ---

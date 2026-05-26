@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -43,7 +43,7 @@
     <header class="dash-header">
       <div class="dash-header-inner">
         <a class="dash-brand" href="./citizen-reporte.html">
-          <img class="dash-brand__logo" src="../../assets/images/logo.svg" alt="" width="46" height="46" />
+          <img class="dash-brand__logo" src="../../assets/images/logo.png" alt="" width="46" height="46" />
           <div class="dash-brand__text">
             <span class="dash-brand__kicker">Sanos y salvos</span>
             <strong class="dash-brand__title">Ciudadano</strong>
@@ -136,11 +136,11 @@
 
         <div class="report-unified__part" id="part-evidencia">
           <h3 class="report-unified__heading"><span class="report-unified__step">3</span> Evidencia fotográfica</h3>
-          <p class="report-unified__hint">Sube una foto desde tu dispositivo (se guarda en la base de datos).</p>
+          <p class="report-unified__hint">La foto se vincula al reporte del paso 2. Si eliges la imagen antes de publicar, se sube autom�ticamente al guardar el reporte.</p>
           <form class="report-form" id="mediaForm">
             <div class="report-form__grid report-form__grid--wide">
               <label class="field"><span>Mascota</span><select id="mediaPetId"></select></label>
-              <label class="field"><span>Reporte (opcional)</span><select id="mediaReportId"><option value="">Sin vincular</option></select></label>
+              <label class="field"><span>Reporte vinculado</span><select id="mediaReportId"><option value="">Publica el reporte en el paso 2</option></select></label>
               <label class="field field-span-2"><span>Foto</span><input id="mediaFile" type="file" accept="image/*" /></label>
               <label class="field field-span-2"><span>Etiquetas</span><input id="mediaTags" type="text" placeholder="parque, collar rojo, tamaño mediano" /></label>
             </div>

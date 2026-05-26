@@ -130,6 +130,15 @@
       if (els.reportForm) els.reportForm.addEventListener("submit", onCreateReport);
       if (els.mediaForm) els.mediaForm.addEventListener("submit", onCreateMedia);
       if (els.mediaFile) els.mediaFile.addEventListener("change", onMediaFilePreview);
+      if (els.reportPetId) {
+        els.reportPetId.addEventListener("change", () => {
+          syncMediaPetFromReportPet();
+          renderReportOptions();
+        });
+      }
+      if (els.mediaPetId) {
+        els.mediaPetId.addEventListener("change", () => renderReportOptions());
+      }
       applyMapPick();
       syncCoordsHint();
       requestAnimationFrame(() => initReportPickMap());
@@ -500,6 +509,8 @@
     if (!state.map || !state.markerLayer) return;
     state.markerLayer.clearLayers();
     const bounds = [];
+    const mediaIndex = core.indexMediaByReportAndPet(state.media);
+
     state.reports.forEach((report) => {
       if (report.latitude == null || report.longitude == null) return;
       const lat = Number(report.latitude);
@@ -513,10 +524,14 @@
         fillColor: color,
         fillOpacity: 0.75
       });
+      const petName = report.petId ? core.petNameById(report.petId, state.pets) : "";
       marker.bindPopup(
-        `<strong>${core.escapeHtml(report.type || "Reporte")}</strong><br/>` +
-          `${core.escapeHtml(report.commune || "Sin comuna")}<br/>` +
-          `<em>${core.escapeHtml(report.description || "Sin descripcion")}</em>`
+        core.buildMapReportPopup(report, {
+          petName,
+          imageUrl: mediaIndex.imageForReport(report),
+          showId: true
+        }),
+        core.mapReportPopupLeafletOpts
       );
       marker.addTo(state.markerLayer);
       bounds.push([lat, lng]);
@@ -551,7 +566,14 @@
   async function refreshMapa() {
     try {
       setStatus("Sincronizando…", false, true);
-      state.reports = await core.api("/api/reports", { token: state.session.token });
+      const [reports, media, pets] = await Promise.all([
+        core.api("/api/reports", { token: state.session.token }),
+        core.api("/api/media", { token: state.session.token }).catch(() => []),
+        core.api("/api/pets", { token: state.session.token }).catch(() => [])
+      ]);
+      state.reports = reports;
+      state.media = media;
+      state.pets = pets;
       renderReportsOnMap();
       setStatus("Listo");
     } catch (error) {
@@ -569,14 +591,16 @@
       const uid = userId();
       const petsPath = uid ? `/api/pets/owner/${uid}` : "/api/pets";
       const reportsPath = uid ? `/api/reports/user/${uid}` : "/api/reports";
-      const [pets, reports, dashboard] = await Promise.all([
+      const [pets, reports, dashboard, media] = await Promise.all([
         core.api(petsPath, { token: state.session.token }),
         core.api(reportsPath, { token: state.session.token }),
-        core.api("/api/bff/dashboard", { token: state.session.token }).catch(() => ({}))
+        core.api("/api/bff/dashboard", { token: state.session.token }).catch(() => ({})),
+        core.api("/api/media", { token: state.session.token }).catch(() => [])
       ]);
       state.pets = pets;
       state.reports = reports;
       state.dashboard = dashboard;
+      state.media = media;
       renderPetOptions();
       renderReportOptions();
       if (PAGE === "reporte" || PAGE === "mascotas" || PAGE === "fotos") {
@@ -965,6 +989,77 @@
     }
   }
 
+  function selectedPetIdForMedia() {
+    if (els.mediaPetId && els.mediaPetId.value) return els.mediaPetId.value;
+    if (els.reportPetId && els.reportPetId.value) return els.reportPetId.value;
+    return "";
+  }
+
+  function reportsForPet(petId) {
+    const pid = String(petId || "");
+    if (!pid) return [...(state.reports || [])];
+    return (state.reports || []).filter((r) => String(r.petId) === pid);
+  }
+
+  function latestReportIdForPet(petId) {
+    const list = reportsForPet(petId).sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+    return list.length ? list[0].id : null;
+  }
+
+  function resolveReportIdForMedia(petId) {
+    const explicit = els.mediaReportId ? String(els.mediaReportId.value || "").trim() : "";
+    if (explicit) return Number(explicit);
+
+    if (state.lastReportId) {
+      const last = (state.reports || []).find((r) => String(r.id) === String(state.lastReportId));
+      if (last && (!petId || String(last.petId) === String(petId))) {
+        return Number(state.lastReportId);
+      }
+    }
+
+    const latest = latestReportIdForPet(petId);
+    return latest != null ? Number(latest) : null;
+  }
+
+  function syncMediaPetFromReportPet() {
+    if (!els.mediaPetId || !els.reportPetId || !els.reportPetId.value) return;
+    els.mediaPetId.value = String(els.reportPetId.value);
+  }
+
+  function syncMediaFormAfterReport(created, petId) {
+    const reportId = created && created.id != null ? created.id : state.lastReportId;
+    const pid = petId || (created && created.petId) || (els.reportPetId && els.reportPetId.value);
+    if (els.mediaPetId && pid) els.mediaPetId.value = String(pid);
+    if (reportId) state.lastReportId = reportId;
+    renderReportOptions();
+    if (els.mediaReportId && reportId) {
+      els.mediaReportId.value = String(reportId);
+    }
+  }
+
+  async function uploadMediaFile({ petId, reportId, file, tags }) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("petId", String(petId));
+    if (reportId != null && !Number.isNaN(Number(reportId))) {
+      formData.append("reportId", String(reportId));
+    }
+    if (tags) formData.append("tags", tags);
+    return core.apiUpload("/api/media/upload", formData, { token: state.session.token });
+  }
+
+  function mergeUploadedMedia(uploaded, petId, reportId) {
+    if (!uploaded) return;
+    const item = {
+      id: uploaded.id,
+      petId: uploaded.petId != null ? uploaded.petId : Number(petId),
+      reportId: uploaded.reportId != null ? uploaded.reportId : Number(reportId),
+      url: uploaded.url,
+      tags: uploaded.tags
+    };
+    state.media = [...(state.media || []).filter((m) => String(m.id) !== String(item.id)), item];
+  }
+
   async function onCreateReport(event) {
     event.preventDefault();
     if (!els.reportPetId) return;
@@ -994,7 +1089,7 @@
         token: state.session.token,
         body: payload
       });
-      state.lastReportId = created && created.id ? created.id : null;
+      state.lastReportId = created && created.id != null ? created.id : null;
       els.reportForm.reset();
       try {
         window.localStorage.removeItem(MAP_PICK_KEY);
@@ -1007,10 +1102,38 @@
       }
       syncCoordsHint();
       await refreshMascotas();
-      if (els.mediaReportId && state.lastReportId) {
-        els.mediaReportId.value = String(state.lastReportId);
+      syncMediaFormAfterReport(created, payload.petId);
+
+      const pendingFile = els.mediaFile && els.mediaFile.files && els.mediaFile.files[0];
+      if (pendingFile && state.lastReportId) {
+        try {
+          const uploaded = await uploadMediaFile({
+            petId: payload.petId,
+            reportId: state.lastReportId,
+            file: pendingFile,
+            tags: els.mediaTags ? els.mediaTags.value.trim() : ""
+          });
+          mergeUploadedMedia(uploaded, payload.petId, state.lastReportId);
+          els.mediaFile.value = "";
+          if (els.mediaPreview && uploaded && uploaded.url) {
+            const src = core.mediaSrcAttr(uploaded.url);
+            els.mediaPreview.classList.remove("hidden");
+            els.mediaPreview.innerHTML = `<img src="${src}" alt="Foto vinculada al reporte" style="max-width:100%;border-radius:12px;max-height:220px;" />`;
+          }
+          setStatus(`Reporte #${state.lastReportId} y foto guardados y vinculados.`);
+        } catch (uploadError) {
+          setStatus(
+            `Reporte #${state.lastReportId} guardado. La foto no se subio: ${uploadError.message}`,
+            true
+          );
+        }
+      } else {
+        setStatus(
+          state.lastReportId
+            ? `Reporte #${state.lastReportId} guardado. Sube la foto en el paso 3 (ya queda vinculada).`
+            : "Reporte guardado en la base de datos."
+        );
       }
-      setStatus("Reporte guardado en la base de datos.");
     } catch (error) {
       setStatus(error.message, true);
     }
@@ -1031,39 +1154,50 @@
 
   async function onCreateMedia(event) {
     event.preventDefault();
-    if (!els.mediaPetId || !els.mediaFile) return;
+    if (!els.mediaFile) return;
 
     const file = els.mediaFile.files && els.mediaFile.files[0];
-    const petId = els.mediaPetId.value;
-    const reportId = els.mediaReportId ? els.mediaReportId.value : "";
-    const tags = els.mediaTags.value.trim();
+    syncMediaPetFromReportPet();
+    const petId = selectedPetIdForMedia();
+    const tags = els.mediaTags ? els.mediaTags.value.trim() : "";
 
     if (!petId || !file) {
       return setStatus("Selecciona mascota y una foto.", true);
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("petId", petId);
-    if (reportId) formData.append("reportId", reportId);
-    if (tags) formData.append("tags", tags);
+    const reportId = resolveReportIdForMedia(petId);
+    if (!reportId || !Number.isFinite(reportId)) {
+      return setStatus(
+        "Primero publica el reporte (paso 2). La foto debe quedar vinculada a ese reporte.",
+        true
+      );
+    }
 
     try {
-      const uploaded = await core.apiUpload("/api/media/upload", formData, {
-        token: state.session.token
-      });
-      els.mediaForm.reset();
-      if (els.mediaPreview) {
-        els.mediaPreview.classList.add("hidden");
-        els.mediaPreview.innerHTML = "";
-      }
+      const uploaded = await uploadMediaFile({ petId, reportId, file, tags });
+      mergeUploadedMedia(uploaded, petId, reportId);
+      state.lastReportId = reportId;
+      els.mediaFile.value = "";
+      if (els.mediaTags) els.mediaTags.value = tags;
+      renderReportOptions();
+      if (els.mediaReportId) els.mediaReportId.value = String(reportId);
+
       if (uploaded && uploaded.url && els.mediaPreview) {
-        const src = core.mediaUrl(uploaded.url).replace(/"/g, "&quot;");
+        const src = core.mediaSrcAttr(uploaded.url);
         els.mediaPreview.classList.remove("hidden");
-        els.mediaPreview.innerHTML = `<img src="${src}" alt="Foto subida" style="max-width:100%;border-radius:12px;max-height:220px;" />`;
+        els.mediaPreview.innerHTML = `<img src="${src}" alt="Foto del reporte #${reportId}" style="max-width:100%;border-radius:12px;max-height:220px;" />`;
       }
+
       await refreshReporte();
-      setStatus("Foto guardada en la base de datos.");
+      if (PAGE === "mapa" || state.map) {
+        try {
+          state.media = await core.api("/api/media", { token: state.session.token });
+          renderReportsOnMap();
+        } catch (e) {
+          /* mapa se actualiza en la siguiente visita */
+        }
+      }
+      setStatus(`Foto guardada y vinculada al reporte #${reportId}.`);
     } catch (error) {
       setStatus(error.message, true);
     }
@@ -1115,23 +1249,36 @@
 
     els.reportPetId.innerHTML = options;
     if (els.mediaPetId) els.mediaPetId.innerHTML = options;
+    syncMediaPetFromReportPet();
     renderReportOptions();
   }
 
   function renderReportOptions() {
     if (!els.mediaReportId) return;
-    const base = '<option value="">Sin vincular</option>';
-    const reportOpts = state.reports.length
-      ? state.reports
-          .map((r) => {
-            const label = `${r.type || "Reporte"} #${r.id || "?"} - ${r.commune || "sin comuna"}`;
-            const selected =
-              state.lastReportId && String(r.id) === String(state.lastReportId) ? " selected" : "";
-            return `<option value="${core.escapeHtml(r.id)}"${selected}>${core.escapeHtml(label)}</option>`;
-          })
-          .join("")
-      : "";
-    els.mediaReportId.innerHTML = base + reportOpts;
+    const petId = selectedPetIdForMedia();
+    const reports = reportsForPet(petId).sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+
+    let selectedId = state.lastReportId;
+    if (selectedId && !reports.some((r) => String(r.id) === String(selectedId))) {
+      selectedId = reports[0] ? reports[0].id : null;
+    }
+    if (!selectedId && reports.length) selectedId = reports[0].id;
+
+    if (!reports.length) {
+      els.mediaReportId.innerHTML =
+        '<option value="">Publica el reporte en el paso 2</option>';
+      return;
+    }
+
+    const reportOpts = reports
+      .map((r) => {
+        const label = `${core.reportTypeLabel(r.type)} #${r.id || "?"} — ${r.commune || "sin comuna"}`;
+        const selected = selectedId && String(r.id) === String(selectedId) ? " selected" : "";
+        return `<option value="${core.escapeHtml(r.id)}"${selected}>${core.escapeHtml(label)}</option>`;
+      })
+      .join("");
+    els.mediaReportId.innerHTML = reportOpts;
+    if (selectedId) els.mediaReportId.value = String(selectedId);
   }
 
   function renderPetOptionsMediaOnly() {

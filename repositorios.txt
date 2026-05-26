@@ -1,0 +1,24 @@
+Repositorio principal del proyecto:
+- https://github.com/IgnacioLondono/Sanos--y--Salvos
+  Contenido: frontend, gateway, bff, microservicios, docker-compose, scripts y documentacion.
+
+Repositorios por componente:
+- Frontend:
+  https://github.com/IgnacioLondono/Sanos--y--Salvos/tree/main/frontend
+  Contenido: aplicacion web (ciudadano y admin), assets, paginas y scripts JS.
+
+- BFF:
+  https://github.com/IgnacioLondono/Sanos--y--Salvos/tree/main/bff
+  Contenido: backend-for-frontend para agregacion de datos de dashboards.
+
+- Gateway:
+  https://github.com/IgnacioLondono/Sanos--y--Salvos/tree/main/gateway
+  Contenido: API Gateway, seguridad, filtros y enrutamiento.
+
+- Microservicios:
+  https://github.com/IgnacioLondono/Sanos--y--Salvos/tree/main/services
+  Contenido: iam-service, pet-catalog-service, reports-service, geo-intelligence-service,
+             media-service, matching-service, capacity-service, audit-service, forum-service.
+
+Nota:
+- Este proyecto mantiene una estrategia de mono-repo; los componentes estan organizados por carpetas dentro del mismo repositorio principal.
