@@ -4,6 +4,9 @@
 (function () {
   const core = window.SANOS_CORE;
 
+  const CHAT_POLL_MS = 3000;
+  const HUB_POLL_MS = 6000;
+
   const state = {
     userId: null,
     token: null,
@@ -12,7 +15,10 @@
     inbox: [],
     sent: [],
     chatsOpen: [],
-    chatsClosed: []
+    chatsClosed: [],
+    lastMessagesKey: "",
+    chatPollTimer: null,
+    hubPollTimer: null
   };
 
   function statusLabel(status) {
@@ -230,9 +236,48 @@
     reapplyTabVisibility();
   }
 
+  function stopChatPolling() {
+    if (state.chatPollTimer) {
+      clearInterval(state.chatPollTimer);
+      state.chatPollTimer = null;
+    }
+  }
+
+  function startChatPolling() {
+    stopChatPolling();
+    if (!state.activeConversationId) return;
+    state.chatPollTimer = setInterval(() => {
+      if (!state.activeConversationId || document.visibilityState === "hidden") return;
+      renderChatMessages({ silent: true });
+    }, CHAT_POLL_MS);
+  }
+
+  function stopHubPolling() {
+    if (state.hubPollTimer) {
+      clearInterval(state.hubPollTimer);
+      state.hubPollTimer = null;
+    }
+  }
+
+  function startHubPolling() {
+    stopHubPolling();
+    state.hubPollTimer = setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      refreshAll({ quiet: true });
+    }, HUB_POLL_MS);
+  }
+
+  function messagesRenderKey(messages) {
+    if (!messages || !messages.length) return "0";
+    const last = messages[messages.length - 1];
+    return `${messages.length}:${last.id}:${last.createdAt}`;
+  }
+
   function hideChatPanel(resetTab) {
     const doReset = resetTab !== false;
+    stopChatPolling();
     state.activeConversationId = null;
+    state.lastMessagesKey = "";
     const panel = document.getElementById("mapContactChatPanel");
     const tabs = document.querySelector(".map-contact-tabs");
     const hubBody = document.getElementById("mapContactHub");
@@ -313,38 +358,50 @@
     if (input && !isOpen) input.disabled = true;
 
     await renderChatMessages();
+    startChatPolling();
     core.refreshIcons();
   }
 
-  async function renderChatMessages() {
+  function paintChatMessages(box, messages, uid) {
+    if (!messages.length) {
+      box.innerHTML = `<p class="map-contact-empty">Sin mensajes aún.</p>`;
+      return;
+    }
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 48;
+    box.innerHTML = messages
+      .map((m) => {
+        const mine = Number(m.authorUserId) === Number(uid);
+        return `<div class="map-contact-chat__bubble ${mine ? "is-mine" : "is-theirs"}">
+            <p>${core.escapeHtml(m.content || "")}</p>
+            <span>${core.escapeHtml(core.formatMapDate(m.createdAt) || "")}</span>
+          </div>`;
+      })
+      .join("");
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  }
+
+  async function renderChatMessages(opts) {
+    const silent = opts && opts.silent;
     const box = document.getElementById("mapContactChatMessages");
     const id = state.activeConversationId;
     const uid = state.userId;
     const s = session();
     if (!box || !id || !uid) return;
 
-    box.innerHTML = `<p class="map-contact-empty">Cargando mensajes…</p>`;
+    if (!silent) box.innerHTML = `<p class="map-contact-empty">Cargando mensajes…</p>`;
     try {
       const messages = await core.api(
         `/api/reports/contact-conversations/${id}/messages?userId=${uid}`,
         { token: s.token }
       );
-      if (!messages.length) {
-        box.innerHTML = `<p class="map-contact-empty">Sin mensajes aún.</p>`;
-        return;
-      }
-      box.innerHTML = messages
-        .map((m) => {
-          const mine = Number(m.authorUserId) === Number(uid);
-          return `<div class="map-contact-chat__bubble ${mine ? "is-mine" : "is-theirs"}">
-            <p>${core.escapeHtml(m.content || "")}</p>
-            <span>${core.escapeHtml(core.formatMapDate(m.createdAt) || "")}</span>
-          </div>`;
-        })
-        .join("");
-      box.scrollTop = box.scrollHeight;
+      const key = messagesRenderKey(messages);
+      if (silent && key === state.lastMessagesKey) return;
+      state.lastMessagesKey = key;
+      paintChatMessages(box, messages, uid);
     } catch (err) {
-      box.innerHTML = `<p class="map-contact-empty">${core.escapeHtml(err.message)}</p>`;
+      if (!silent) {
+        box.innerHTML = `<p class="map-contact-empty">${core.escapeHtml(err.message)}</p>`;
+      }
     }
   }
 
@@ -394,7 +451,8 @@
     }
   }
 
-  async function refreshAll() {
+  async function refreshAll(opts) {
+    const quiet = opts && opts.quiet;
     const s = session();
     const uid = Number(s.user && s.user.id);
     if (!uid || !s.token) return;
@@ -419,11 +477,11 @@
       renderConversationList(document.getElementById("mapContactTabHistory"), closed, uid);
 
       if (state.activeConversationId) {
-        await renderChatMessages();
+        await renderChatMessages({ silent: quiet });
       }
       reapplyTabVisibility();
     } catch (err) {
-      console.error(err);
+      if (!quiet) console.error(err);
     }
   }
 
@@ -469,6 +527,18 @@
 
     switchTab("inbox");
     refreshAll();
+
+    startHubPolling();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        refreshAll({ quiet: true });
+        if (state.activeConversationId) renderChatMessages({ silent: true });
+      }
+    });
+    window.addEventListener("beforeunload", () => {
+      stopChatPolling();
+      stopHubPolling();
+    });
   }
 
   /* Compat con citizen-dashboard */

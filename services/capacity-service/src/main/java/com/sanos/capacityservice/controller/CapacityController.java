@@ -85,8 +85,8 @@ public class CapacityController {
                 e.getZonaOperacion(),
                 e.getVoluntarios(),
                 e.getHorasDisponibles(),
-                e.getDisponibleDesde() != null ? e.getDisponibleDesde().toString() : null,
-                e.getFechaCreacion() != null ? e.getFechaCreacion().toString() : null
+                com.sanos.capacityservice.util.ApiDateTimes.format(e.getDisponibleDesde()),
+                com.sanos.capacityservice.util.ApiDateTimes.format(e.getFechaCreacion())
         );
     }
 

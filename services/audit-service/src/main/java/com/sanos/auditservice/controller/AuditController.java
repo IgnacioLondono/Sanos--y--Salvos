@@ -81,7 +81,7 @@ public class AuditController {
                 l.getOperacion() == null ? l.getAccionRealizada() : l.getOperacion(),
                 l.getActor(),
                 l.getCambiosJson(),
-                l.getCreadoEn() != null ? l.getCreadoEn().toString() : null
+                com.sanos.auditservice.util.ApiDateTimes.format(l.getCreadoEn())
         );
     }
 }

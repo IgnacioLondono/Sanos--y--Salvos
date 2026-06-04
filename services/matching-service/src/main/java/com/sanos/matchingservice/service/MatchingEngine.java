@@ -193,7 +193,7 @@ public class MatchingEngine {
                 e.getIdReporteEncontrada(),
                 e.getScoreTotal(),
                 e.getExplicacion(),
-                e.getCreadoEn() != null ? e.getCreadoEn().toString() : null
+                com.sanos.matchingservice.util.ApiDateTimes.format(e.getCreadoEn())
         );
     }
 

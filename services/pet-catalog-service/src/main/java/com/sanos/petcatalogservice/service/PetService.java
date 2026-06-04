@@ -7,6 +7,7 @@ import com.sanos.petcatalogservice.model.VinculoMascota;
 import com.sanos.petcatalogservice.repository.CaracteristicaFisicaRepository;
 import com.sanos.petcatalogservice.repository.MascotaRepository;
 import com.sanos.petcatalogservice.repository.VinculoMascotaRepository;
+import com.sanos.petcatalogservice.util.ApiDateTimes;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,7 +102,7 @@ public class PetService {
                 caract != null ? caract.getTamano() : null,
                 m.getNumeroChip(),
                 ownerId,
-                m.getFechaRegistro() != null ? m.getFechaRegistro().toString() : null
+                ApiDateTimes.format(m.getFechaRegistro())
         );
     }
 }

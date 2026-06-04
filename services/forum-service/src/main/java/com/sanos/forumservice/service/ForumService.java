@@ -138,6 +138,6 @@ public class ForumService {
     }
 
     private String formatDate(java.time.LocalDateTime dt) {
-        return dt == null ? null : dt.toString();
+        return com.sanos.forumservice.util.ApiDateTimes.format(dt);
     }
 }

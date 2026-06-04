@@ -2,6 +2,7 @@ package com.sanos.iamservice.dto;
 
 import com.sanos.iamservice.model.ContactoUsuario;
 import com.sanos.iamservice.model.Usuario;
+import com.sanos.iamservice.util.ApiDateTimes;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(name = "UserDto", description = "Vista de usuario para API (mapea tablas usuarios + contactos_usuario).")
@@ -22,7 +23,7 @@ public record UserDto(
     public static UserDto fromEntities(Usuario usuario, ContactoUsuario contacto) {
         String email = contacto != null ? contacto.getCorreoElectronico() : null;
         String phone = contacto != null ? contacto.getTelefonoPrincipal() : null;
-        String created = usuario.getFechaRegistro() != null ? usuario.getFechaRegistro().toString() : null;
+        String created = ApiDateTimes.format(usuario.getFechaRegistro());
         String displayName = deriveDisplayName(usuario.getNombreCompleto());
         return new UserDto(
                 usuario.getIdUsuario(),

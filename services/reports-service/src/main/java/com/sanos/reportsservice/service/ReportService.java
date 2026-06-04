@@ -6,6 +6,7 @@ import com.sanos.reportsservice.model.DetalleReporte;
 import com.sanos.reportsservice.model.ReporteEvento;
 import com.sanos.reportsservice.repository.DetalleReporteRepository;
 import com.sanos.reportsservice.repository.ReporteEventoRepository;
+import com.sanos.reportsservice.util.ApiDateTimes;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -137,7 +138,7 @@ public class ReportService {
                 r.getEstadoSalud(),
                 latitude,
                 longitude,
-                r.getFechaCreacion() != null ? r.getFechaCreacion().toString() : null
+                ApiDateTimes.format(r.getFechaCreacion())
         );
     }
 }

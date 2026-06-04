@@ -7,6 +7,7 @@ import com.sanos.reportsservice.model.SolicitudContacto;
 import com.sanos.reportsservice.repository.ConversacionContactoRepository;
 import com.sanos.reportsservice.repository.MensajeContactoRepository;
 import com.sanos.reportsservice.repository.SolicitudContactoRepository;
+import com.sanos.reportsservice.util.ApiDateTimes;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -180,8 +181,8 @@ public class ContactConversationService {
                 c.getIdUsuarioEmisor(),
                 c.getIdUsuarioReceptor(),
                 c.getEstado(),
-                c.getFechaCreacion() != null ? c.getFechaCreacion().toString() : null,
-                c.getFechaCierre() != null ? c.getFechaCierre().toString() : null,
+                ApiDateTimes.format(c.getFechaCreacion()),
+                ApiDateTimes.format(c.getFechaCierre()),
                 c.getIdUsuarioCerro(),
                 preview,
                 msgs.size()
@@ -194,7 +195,7 @@ public class ContactConversationService {
                 m.getIdConversacion(),
                 m.getIdUsuarioAutor(),
                 m.getContenido(),
-                m.getFechaCreacion() != null ? m.getFechaCreacion().toString() : null
+                ApiDateTimes.format(m.getFechaCreacion())
         );
     }
 }

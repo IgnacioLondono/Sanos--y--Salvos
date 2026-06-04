@@ -7,6 +7,7 @@ import com.sanos.reportsservice.model.ReporteEvento;
 import com.sanos.reportsservice.model.SolicitudContacto;
 import com.sanos.reportsservice.repository.ReporteEventoRepository;
 import com.sanos.reportsservice.repository.SolicitudContactoRepository;
+import com.sanos.reportsservice.util.ApiDateTimes;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,8 +123,8 @@ public class ContactRequestService {
                 s.getIdUsuarioReceptor(),
                 s.getMensaje(),
                 s.getEstado(),
-                s.getFechaCreacion() != null ? s.getFechaCreacion().toString() : null,
-                s.getFechaRespuesta() != null ? s.getFechaRespuesta().toString() : null,
+                ApiDateTimes.format(s.getFechaCreacion()),
+                ApiDateTimes.format(s.getFechaRespuesta()),
                 convId
         );
     }
