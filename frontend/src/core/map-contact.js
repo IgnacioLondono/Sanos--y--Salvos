@@ -4,8 +4,9 @@
 (function () {
   const core = window.SANOS_CORE;
 
-  const CHAT_POLL_MS = 3000;
-  const HUB_POLL_MS = 6000;
+  const CHAT_POLL_MS = 10000;
+  const HUB_POLL_MS = 30000;
+  const CHAT_POLL_MAX_MS = 60000;
 
   const state = {
     userId: null,
@@ -16,10 +17,76 @@
     sent: [],
     chatsOpen: [],
     chatsClosed: [],
+    userNames: {},
     lastMessagesKey: "",
     chatPollTimer: null,
-    hubPollTimer: null
+    hubPollTimer: null,
+    chatPollDelayMs: CHAT_POLL_MS,
+    rateLimitedUntil: 0
   };
+
+  function userLabel(userId) {
+    const id = Number(userId);
+    const u = state.userNames[id];
+    if (!u) return `Usuario #${id}`;
+    return (u.displayName || u.fullName || u.email || `Usuario #${id}`).trim();
+  }
+
+  function collectUserIds() {
+    const ids = new Set();
+    const add = (id) => {
+      const n = Number(id);
+      if (n) ids.add(n);
+    };
+    state.inbox.forEach((i) => {
+      add(i.fromUserId);
+      add(i.toUserId);
+    });
+    state.sent.forEach((i) => {
+      add(i.fromUserId);
+      add(i.toUserId);
+    });
+    state.chatsOpen.concat(state.chatsClosed).forEach((c) => {
+      add(c.fromUserId);
+      add(c.toUserId);
+    });
+    return [...ids];
+  }
+
+  async function ensureUserNames(token) {
+    if (!token) return;
+    try {
+      const users = await core.api("/api/iam/users", { token });
+      if (!Array.isArray(users)) return;
+      users.forEach((u) => {
+        if (u && u.id != null) state.userNames[Number(u.id)] = u;
+      });
+    } catch {
+      /* nombres opcionales; se muestra Usuario #id */
+    }
+  }
+
+  function updateTabBadges() {
+    const counts = {
+      inbox: state.inbox.length,
+      sent: state.sent.filter((s) => String(s.status).toUpperCase() === "PENDING").length,
+      chats: state.chatsOpen.length,
+      history: state.chatsClosed.length
+    };
+    document.querySelectorAll("[data-tab-count]").forEach((el) => {
+      const key = el.getAttribute("data-tab-count");
+      const n = counts[key] || 0;
+      el.textContent = n > 0 ? String(n) : "";
+      el.hidden = n <= 0;
+    });
+    const inboxTab = document.querySelector('[data-contact-tab="inbox"]');
+    if (inboxTab) inboxTab.classList.toggle("has-pending", counts.inbox > 0);
+  }
+
+  function otherUserId(conv, currentUserId) {
+    if (!conv) return null;
+    return Number(conv.fromUserId) === Number(currentUserId) ? conv.toUserId : conv.fromUserId;
+  }
 
   function statusLabel(status) {
     const s = String(status || "").toUpperCase();
@@ -136,7 +203,7 @@
       const empty =
         mode === "sent"
           ? "No has enviado solicitudes."
-          : "No tienes solicitudes recibidas.";
+          : "No tienes solicitudes pendientes por revisar.";
       container.innerHTML = `<p class="map-contact-empty">${empty}</p>`;
       return;
     }
@@ -167,8 +234,8 @@
         }
 
         const meta = isReceiver
-          ? `De usuario #${item.fromUserId}`
-          : `Para el dueño del reporte #${item.toUserId}`;
+          ? `De ${userLabel(item.fromUserId)}`
+          : `Para ${userLabel(item.toUserId)} · reporte #${item.reportId}`;
 
         return `<article class="map-contact-inbox__item ${isPending ? "is-pending" : ""}">
           <div class="map-contact-inbox__head">
@@ -181,17 +248,6 @@
         </article>`;
       })
       .join("");
-
-    if (mode === "inbox") {
-      const pending = items.filter((i) => String(i.status).toUpperCase() === "PENDING").length;
-      const badge = document.getElementById("mapContactBadge");
-      if (badge) {
-        badge.textContent = pending ? String(pending) : "";
-        badge.hidden = !pending;
-      }
-      const inboxTab = document.querySelector('[data-contact-tab="inbox"]');
-      if (inboxTab) inboxTab.classList.toggle("has-pending", pending > 0);
-    }
   }
 
   function renderConversationList(container, list, currentUserId) {
@@ -207,12 +263,10 @@
     }
     container.innerHTML = items
       .map((c) => {
-        const other =
-          Number(c.fromUserId) === Number(currentUserId) ? c.toUserId : c.fromUserId;
-        const isReceiver = Number(c.toUserId) === Number(currentUserId);
+        const other = otherUserId(c, currentUserId);
         return `<article class="map-contact-inbox__item">
           <div class="map-contact-inbox__head">
-            <strong>Reporte #${core.escapeHtml(String(c.reportId))} · Usuario #${core.escapeHtml(String(other))}</strong>
+            <strong>${core.escapeHtml(userLabel(other))} · Reporte #${core.escapeHtml(String(c.reportId))}</strong>
             <span class="badge ${badgeClass(c.status)}">${core.escapeHtml(statusLabel(c.status))}</span>
           </div>
           <p class="map-contact-inbox__msg">${core.escapeHtml(c.lastMessagePreview || "Sin mensajes")}</p>
@@ -238,18 +292,38 @@
 
   function stopChatPolling() {
     if (state.chatPollTimer) {
-      clearInterval(state.chatPollTimer);
+      clearTimeout(state.chatPollTimer);
       state.chatPollTimer = null;
     }
   }
 
-  function startChatPolling() {
+  function scheduleChatPoll() {
     stopChatPolling();
     if (!state.activeConversationId) return;
-    state.chatPollTimer = setInterval(() => {
-      if (!state.activeConversationId || document.visibilityState === "hidden") return;
-      renderChatMessages({ silent: true });
-    }, CHAT_POLL_MS);
+    const delay = Math.max(state.chatPollDelayMs, CHAT_POLL_MS);
+    state.chatPollTimer = setTimeout(async () => {
+      state.chatPollTimer = null;
+      if (!state.activeConversationId || document.visibilityState === "hidden") {
+        scheduleChatPoll();
+        return;
+      }
+      if (Date.now() < state.rateLimitedUntil) {
+        scheduleChatPoll();
+        return;
+      }
+      await renderChatMessages({ silent: true });
+      scheduleChatPoll();
+    }, delay);
+  }
+
+  function startChatPolling() {
+    state.chatPollDelayMs = CHAT_POLL_MS;
+    scheduleChatPoll();
+  }
+
+  function onPollRateLimited() {
+    state.rateLimitedUntil = Date.now() + 45000;
+    state.chatPollDelayMs = Math.min(state.chatPollDelayMs * 2, CHAT_POLL_MAX_MS);
   }
 
   function stopHubPolling() {
@@ -263,6 +337,11 @@
     stopHubPolling();
     state.hubPollTimer = setInterval(() => {
       if (document.visibilityState === "hidden") return;
+      if (Date.now() < state.rateLimitedUntil) return;
+      if (state.activeConversationId) {
+        renderChatMessages({ silent: true });
+        return;
+      }
       refreshAll({ quiet: true });
     }, HUB_POLL_MS);
   }
@@ -322,6 +401,38 @@
     }
   }
 
+  function syncChatChrome(conv) {
+    const uid = state.userId;
+    const title = document.getElementById("mapContactChatTitle");
+    const meta = document.getElementById("mapContactChatMeta");
+    const closeBtn = document.getElementById("mapContactChatClose");
+    const form = document.getElementById("mapContactChatForm");
+    const input = document.getElementById("mapContactChatInput");
+
+    const other = otherUserId(conv, uid);
+    const isClosed = conv && String(conv.status).toUpperCase() === "CLOSED";
+    const fromHistory = state.activeTab === "history";
+
+    if (title && conv) {
+      title.textContent = `Chat · ${userLabel(other)} · Reporte #${conv.reportId}`;
+    }
+    if (meta && conv) {
+      meta.textContent = isClosed
+        ? `Conversación cerrada con ${userLabel(other)}`
+        : `Conversación activa con ${userLabel(other)}`;
+    }
+
+    const isReceiver = conv && Number(conv.toUserId) === Number(uid);
+    const isOpen = conv && String(conv.status).toUpperCase() === "OPEN";
+    const showClose = isReceiver && isOpen && !fromHistory && !isClosed;
+    if (closeBtn) closeBtn.classList.toggle("hidden", !showClose);
+    if (form) form.classList.toggle("hidden", !isOpen);
+    if (input) {
+      if (!isOpen) input.disabled = true;
+      else input.disabled = false;
+    }
+  }
+
   async function openChat(conversationId) {
     const s = session();
     const uid = state.userId;
@@ -333,29 +444,7 @@
     const conv = [...state.chatsOpen, ...state.chatsClosed].find(
       (c) => Number(c.id) === Number(conversationId)
     );
-    const title = document.getElementById("mapContactChatTitle");
-    const meta = document.getElementById("mapContactChatMeta");
-    const closeBtn = document.getElementById("mapContactChatClose");
-    const form = document.getElementById("mapContactChatForm");
-    const input = document.getElementById("mapContactChatInput");
-
-    if (title && conv) {
-      title.textContent = `Chat · Reporte #${conv.reportId}`;
-    }
-    if (meta && conv) {
-      meta.textContent =
-        String(conv.status).toUpperCase() === "CLOSED"
-          ? "Conversación cerrada (historial)"
-          : "Conversación activa";
-    }
-
-    const isReceiver = conv && Number(conv.toUserId) === Number(uid);
-    const isOpen = conv && String(conv.status).toUpperCase() === "OPEN";
-    if (closeBtn) {
-      closeBtn.classList.toggle("hidden", !(isReceiver && isOpen));
-    }
-    if (form) form.classList.toggle("hidden", !isOpen);
-    if (input && !isOpen) input.disabled = true;
+    syncChatChrome(conv);
 
     await renderChatMessages();
     startChatPolling();
@@ -371,7 +460,9 @@
     box.innerHTML = messages
       .map((m) => {
         const mine = Number(m.authorUserId) === Number(uid);
+        const who = mine ? "Tú" : userLabel(m.authorUserId);
         return `<div class="map-contact-chat__bubble ${mine ? "is-mine" : "is-theirs"}">
+            <strong class="map-contact-chat__author">${core.escapeHtml(who)}</strong>
             <p>${core.escapeHtml(m.content || "")}</p>
             <span>${core.escapeHtml(core.formatMapDate(m.createdAt) || "")}</span>
           </div>`;
@@ -399,6 +490,13 @@
       state.lastMessagesKey = key;
       paintChatMessages(box, messages, uid);
     } catch (err) {
+      if (err.status === 429) {
+        onPollRateLimited();
+        if (!silent) {
+          box.innerHTML = `<p class="map-contact-empty">Demasiadas consultas. Espera unos segundos…</p>`;
+        }
+        return;
+      }
       if (!silent) {
         box.innerHTML = `<p class="map-contact-empty">${core.escapeHtml(err.message)}</p>`;
       }
@@ -425,7 +523,12 @@
       await renderChatMessages();
       await refreshAll();
     } catch (err) {
-      alert(err.message || "No se pudo enviar el mensaje.");
+      if (err.status === 429) {
+        onPollRateLimited();
+        alert("Demasiadas peticiones. Espera un momento y vuelve a intentar.");
+      } else {
+        alert(err.message || "No se pudo enviar el mensaje.");
+      }
     }
   }
 
@@ -460,23 +563,36 @@
     state.token = s.token;
 
     try {
-      const [inbox, sent, open, closed] = await Promise.all([
+      const [inboxRaw, sent, open, closed] = await Promise.all([
         loadInbox(uid, s.token),
         loadSent(uid, s.token),
         loadConversations(uid, s.token, "OPEN"),
         loadConversations(uid, s.token, "CLOSED")
       ]);
-      state.inbox = inbox;
-      state.sent = sent;
-      state.chatsOpen = open;
-      state.chatsClosed = closed;
+      state.inbox = (inboxRaw || []).filter(
+        (i) => String(i.status).toUpperCase() === "PENDING"
+      );
+      state.sent = sent || [];
+      state.chatsOpen = open || [];
+      state.chatsClosed = closed || [];
 
-      renderRequestList(document.getElementById("mapContactTabInbox"), inbox, uid, "inbox");
-      renderRequestList(document.getElementById("mapContactTabSent"), sent, uid, "sent");
-      renderConversationList(document.getElementById("mapContactTabChats"), open, uid);
-      renderConversationList(document.getElementById("mapContactTabHistory"), closed, uid);
+      await ensureUserNames(s.token);
+
+      renderRequestList(document.getElementById("mapContactTabInbox"), state.inbox, uid, "inbox");
+      renderRequestList(document.getElementById("mapContactTabSent"), state.sent, uid, "sent");
+      renderConversationList(document.getElementById("mapContactTabChats"), state.chatsOpen, uid);
+      renderConversationList(
+        document.getElementById("mapContactTabHistory"),
+        state.chatsClosed,
+        uid
+      );
+      updateTabBadges();
 
       if (state.activeConversationId) {
+        const conv = [...state.chatsOpen, ...state.chatsClosed].find(
+          (c) => Number(c.id) === Number(state.activeConversationId)
+        );
+        syncChatChrome(conv);
         await renderChatMessages({ silent: quiet });
       }
       reapplyTabVisibility();

@@ -100,6 +100,9 @@
       }
       return "Sesión expirada o no válida. Cierra sesión e inicia de nuevo.";
     }
+    if (status === 429) {
+      return "Demasiadas peticiones. Espera unos segundos e inténtalo de nuevo.";
+    }
     return (
       (data && data.error) ||
       (typeof data === "string" ? data : "") ||
@@ -474,9 +477,9 @@
 
   function forbiddenUrl() {
     if (window.SANOS_PATHS && typeof window.SANOS_PATHS.page === "function") {
-      return window.SANOS_PATHS.root() + "pages/acceso-denegado.html";
+      return window.SANOS_PATHS.root() + "pages/404.html";
     }
-    return "./pages/acceso-denegado.html";
+    return "./pages/404.html";
   }
 
   const mapReportPopupLeafletOpts = {

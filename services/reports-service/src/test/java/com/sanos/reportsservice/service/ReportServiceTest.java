@@ -118,6 +118,24 @@ class ReportServiceTest {
     }
 
     @Test
+    void updateStatus_foundReportCanRevertToLostWhenReopening() {
+        ReporteEvento rep = new ReporteEvento();
+        rep.setIdReporte(202L);
+        rep.setEstado("RESOLVED");
+        rep.setTipoReporte("FOUND");
+
+        when(reporteRepo.findById(202L)).thenReturn(Optional.of(rep));
+        when(reporteRepo.save(any(ReporteEvento.class))).thenAnswer(i -> i.getArgument(0));
+        when(detalleRepo.findByIdReporte(202L)).thenReturn(Optional.empty());
+
+        Optional<ReportDto> result = service.updateStatus(202L, "OPEN", "LOST");
+
+        assertTrue(result.isPresent());
+        assertEquals("LOST", result.get().type());
+        assertEquals("OPEN", result.get().status());
+    }
+
+    @Test
     void updateStatus_returnsEmptyWhenReportNotFound() {
         when(reporteRepo.findById(999L)).thenReturn(Optional.empty());
 

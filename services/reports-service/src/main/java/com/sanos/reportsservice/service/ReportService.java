@@ -83,9 +83,16 @@ public class ReportService {
 
     @Transactional
     public Optional<ReportDto> updateStatus(Long id, String newStatus) {
+        return updateStatus(id, newStatus, null);
+    }
+
+    @Transactional
+    public Optional<ReportDto> updateStatus(Long id, String newStatus, String newType) {
         return reporteRepo.findById(id).map(rep -> {
             rep.setEstado(newStatus);
-            if (isLostType(rep.getTipoReporte()) && isResolvedOrClosedStatus(newStatus)) {
+            if (newType != null && !newType.isBlank()) {
+                rep.setTipoReporte(normalizeReportType(newType));
+            } else if (isLostType(rep.getTipoReporte()) && isResolvedOrClosedStatus(newStatus)) {
                 rep.setTipoReporte("FOUND");
             }
             ReporteEvento saved = reporteRepo.save(rep);
@@ -117,6 +124,13 @@ public class ReportService {
         if (status == null || status.isBlank()) return false;
         String s = status.trim().toUpperCase();
         return "RESOLVED".equals(s) || "RESUELTO".equals(s) || "CLOSED".equals(s) || "CERRADO".equals(s);
+    }
+
+    private static String normalizeReportType(String type) {
+        if (type == null || type.isBlank()) return "LOST";
+        String t = type.trim().toUpperCase();
+        if ("FOUND".equals(t) || "ENCONTRADA".equals(t)) return "FOUND";
+        return "LOST";
     }
 
     private ReportDto toDto(ReporteEvento r) {

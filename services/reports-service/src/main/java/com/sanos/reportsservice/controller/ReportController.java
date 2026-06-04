@@ -86,7 +86,10 @@ public class ReportController {
                 : ResponseEntity.notFound().build();
     }
 
-    @Operation(summary = "Actualizar estado", description = "PATCH: cuerpo JSON {\"status\":\"...\"} actualiza detalle y cabecera.")
+    @Operation(
+            summary = "Actualizar estado",
+            description = "PATCH con status (OPEN, RESOLVED, CLOSED, …). Campo opcional type (LOST|FOUND) "
+                    + "permite volver a marcar perdida. Si status es RESOLVED/CLOSED y el reporte era LOST, type pasa a FOUND.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = ReportDto.class))),
             @ApiResponse(responseCode = "404", description = "Reporte no existe")
@@ -101,7 +104,8 @@ public class ReportController {
         String newStatus = payload.status() != null && !payload.status().isBlank()
                 ? payload.status()
                 : "ABIERTO";
-        return service.updateStatus(id, newStatus)
+        String newType = payload.type();
+        return service.updateStatus(id, newStatus, newType)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

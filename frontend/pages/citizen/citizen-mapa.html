@@ -82,16 +82,15 @@
           <div class="section-head-min__title">
             <i data-lucide="messages-square" aria-hidden="true"></i>
             <h2>Contacto y mensajes</h2>
-            <span class="map-contact-badge" id="mapContactBadge" hidden>0</span>
           </div>
           <p class="section-head-min__hint">Envía solicitudes en el mapa. Si te la aceptan (o aceptas una), se abre un chat. El dueño del reporte puede cerrarlo y queda en historial.</p>
         </div>
 
         <nav class="map-contact-tabs" role="tablist" aria-label="Contacto">
-          <button type="button" class="map-contact-tabs__btn is-active" role="tab" data-contact-tab="inbox" aria-selected="true">Recibidas</button>
-          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="sent">Enviadas</button>
-          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="chats">Chats activos</button>
-          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="history">Historial</button>
+          <button type="button" class="map-contact-tabs__btn is-active" role="tab" data-contact-tab="inbox" aria-selected="true">Recibidas <span class="map-contact-tabs__count" data-tab-count="inbox" hidden></span></button>
+          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="sent">Enviadas <span class="map-contact-tabs__count" data-tab-count="sent" hidden></span></button>
+          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="chats">Chats activos <span class="map-contact-tabs__count" data-tab-count="chats" hidden></span></button>
+          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="history">Historial <span class="map-contact-tabs__count" data-tab-count="history" hidden></span></button>
         </nav>
 
         <div class="map-contact-hub__body" id="mapContactHub">

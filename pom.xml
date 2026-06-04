@@ -8,6 +8,12 @@
   <packaging>pom</packaging>
   <name>Sanos y Salvos</name>
   <description>Agregador Maven para microservicios (importar en el IDE desde la raíz del repo)</description>
+  <properties>
+    <java.version>17</java.version>
+    <jacoco.version>0.8.12</jacoco.version>
+    <springdoc.version>2.6.0</springdoc.version>
+  </properties>
+
   <modules>
     <module>services/iam-service</module>
     <module>services/pet-catalog-service</module>

@@ -40,4 +40,4 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
   show-actuator: false
-  packages-to-scan: com.sanos.capacityservice.controller, com.sanos.capacityservice.dto, com.sanos.capacityservice.model
+  packages-to-scan: com.sanos.capacityservice.controller, com.sanos.capacityservice.dto

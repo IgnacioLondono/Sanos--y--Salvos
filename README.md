@@ -340,7 +340,7 @@ En `/register.html` el formulario exige **Contraseña** y **Confirmar contraseñ
 
 ### Acceso a panel admin (sin cerrar sesión ciudadana)
 
-Si un usuario con sesión **ciudadana** intenta abrir una URL de administrador (`/pages/admin/*`), **no se elimina** su sesión de ciudadano. Se redirige a `pages/acceso-denegado.html` con mensaje y enlace de vuelta al panel ciudadano. Solo se limpia la sesión admin si existía un token admin inválido (rol distinto de `ADMIN`).
+Si un usuario con sesión **ciudadana** intenta abrir una URL de administrador (`/pages/admin/*`), **no se elimina** su sesión de ciudadano. Se redirige a `pages/404.html` (solo «Página no encontrada», sin revelar que existe un panel admin). Solo se limpia la sesión admin si existía un token admin inválido (rol distinto de `ADMIN`).
 
 ---
 

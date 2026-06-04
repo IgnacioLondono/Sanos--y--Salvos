@@ -80,13 +80,15 @@ window.SANOS_PROFILE = (function () {
         profileEmailFull.textContent = user.email || '—';
       }
       if (profileFullName) {
-        profileFullName.textContent = user.displayName || user.fullName || '—';
+        profileFullName.textContent = user.fullName || user.displayName || '—';
       }
       if (profilePhone) {
         profilePhone.textContent = user.phone || '—';
       }
       if (profileLocation) {
-        profileLocation.textContent = user.location || '—';
+        const location =
+          [user.commune, user.address].filter(Boolean).join(' · ') || user.location || '—';
+        profileLocation.textContent = location;
       }
       
       // Rol del usuario

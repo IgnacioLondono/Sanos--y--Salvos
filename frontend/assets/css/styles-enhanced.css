@@ -1356,6 +1356,27 @@ button.user-card:focus-visible {
   color: var(--text);
 }
 
+.map-contact-tabs__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  margin-left: 0.35rem;
+  border-radius: 999px;
+  background: var(--danger, #dc2626);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.map-contact-tabs__btn.is-active .map-contact-tabs__count {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--primary, #0d9488);
+}
+
 .map-contact-hub__body {
   position: relative;
 }
@@ -1439,6 +1460,14 @@ button.user-card:focus-visible {
   align-self: flex-start;
   background: var(--surface-2, rgba(255, 255, 255, 0.06));
   border: 1px solid var(--border);
+}
+
+.map-contact-chat__author {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-bottom: 2px;
 }
 
 .map-contact-chat__bubble p {

@@ -40,4 +40,4 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
   show-actuator: false
-  packages-to-scan: com.sanos.petcatalogservice.controller, com.sanos.petcatalogservice.dto, com.sanos.petcatalogservice.model
+  packages-to-scan: com.sanos.petcatalogservice.controller, com.sanos.petcatalogservice.dto

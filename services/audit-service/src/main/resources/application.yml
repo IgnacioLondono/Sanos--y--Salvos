@@ -45,4 +45,4 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
   show-actuator: false
-  packages-to-scan: com.sanos.auditservice.controller, com.sanos.auditservice.dto, com.sanos.auditservice.model
+  packages-to-scan: com.sanos.auditservice.controller, com.sanos.auditservice.dto

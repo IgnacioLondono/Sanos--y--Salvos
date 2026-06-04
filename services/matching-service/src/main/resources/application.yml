@@ -49,4 +49,4 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
   show-actuator: false
-  packages-to-scan: com.sanos.matchingservice.controller, com.sanos.matchingservice.dto, com.sanos.matchingservice.model
+  packages-to-scan: com.sanos.matchingservice.controller, com.sanos.matchingservice.dto

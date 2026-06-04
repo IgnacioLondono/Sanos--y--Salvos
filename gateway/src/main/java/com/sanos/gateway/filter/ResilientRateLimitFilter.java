@@ -9,18 +9,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Filtro que combina Rate Limiting con Circuit Breaker
+ * Rate limiting por minuto (ventana deslizante por minuto calendario) + circuit breaker.
  */
 @Component
 public class ResilientRateLimitFilter implements GlobalFilter, Ordered {
 
+    private static final int MAX_REQUESTS_PER_MINUTE = 400;
+
     private final CircuitBreaker circuitBreaker;
-    private final ConcurrentHashMap<String, AtomicLong> requestCounts = new ConcurrentHashMap<>();
-    private final long MAX_REQUESTS_PER_MINUTE = 100;
+    private final ConcurrentHashMap<String, CounterWindow> requestCounts = new ConcurrentHashMap<>();
 
     public ResilientRateLimitFilter(CircuitBreaker serviceCircuitBreaker) {
         this.circuitBreaker = serviceCircuitBreaker;
@@ -28,61 +29,58 @@ public class ResilientRateLimitFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        // Verificar si el circuito está abierto
         if (circuitBreaker.getState() == CircuitBreaker.State.OPEN) {
             exchange.getResponse().setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
-            return exchange.getResponse().writeWith(Mono.empty());
+            return exchange.getResponse().setComplete();
         }
 
-        // Aplicar rate limiting
         String clientId = getClientIdentifier(exchange);
         if (!isWithinRateLimit(clientId)) {
             exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
-            return exchange.getResponse().writeWith(Mono.empty());
+            return exchange.getResponse().setComplete();
         }
 
         return chain.filter(exchange);
     }
 
-    /**
-     * Obtiene un identificador único del cliente (IP o JWT)
-     */
     private String getClientIdentifier(ServerWebExchange exchange) {
-        String ip = exchange.getRequest().getRemoteAddress() != null 
+        String ip = exchange.getRequest().getRemoteAddress() != null
                 ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
                 : "unknown";
-        
+
         String authorization = exchange.getRequest().getHeaders().getFirst("Authorization");
         if (authorization != null && authorization.startsWith("Bearer ")) {
-            return authorization.substring(7); // Usar el JWT como identificador
+            return "jwt:" + authorization.substring(7, Math.min(authorization.length(), 48));
         }
-        
-        return ip;
+
+        return "ip:" + ip;
     }
 
-    /**
-     * Verifica si el cliente está dentro del límite de rate
-     */
     private boolean isWithinRateLimit(String clientId) {
-        AtomicLong count = requestCounts.computeIfAbsent(clientId, k -> new AtomicLong(0));
-        long currentCount = count.incrementAndGet();
-        
-        if (currentCount <= MAX_REQUESTS_PER_MINUTE) {
-            return true;
+        long currentMinute = Instant.now().getEpochSecond() / 60;
+        CounterWindow window = requestCounts.computeIfAbsent(clientId, k -> new CounterWindow(currentMinute, 0));
+        synchronized (window) {
+            if (window.minute != currentMinute) {
+                window.minute = currentMinute;
+                window.count = 0;
+            }
+            window.count++;
+            return window.count <= MAX_REQUESTS_PER_MINUTE;
         }
-        
-        // Resetear después de un minuto (simplificado)
-        if (currentCount > MAX_REQUESTS_PER_MINUTE * 2) {
-            requestCounts.remove(clientId);
-            count.set(0);
-        }
-        
-        return false;
     }
 
     @Override
     public int getOrder() {
-        return -50; // Ejecutarse antes que otros filtros
+        return -50;
+    }
+
+    private static class CounterWindow {
+        long minute;
+        int count;
+
+        CounterWindow(long minute, int count) {
+            this.minute = minute;
+            this.count = count;
+        }
     }
 }
-

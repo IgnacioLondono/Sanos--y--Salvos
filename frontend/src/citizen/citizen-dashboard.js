@@ -48,14 +48,14 @@
     mediaTags: document.getElementById("mediaTags"),
     profileForm: document.getElementById("profileForm"),
     passwordForm: document.getElementById("passwordForm"),
-    profileEmail: document.getElementById("profileEmail"),
-    profileRut: document.getElementById("profileRut"),
-    profileFullName: document.getElementById("profileFullName"),
-    profileCommune: document.getElementById("profileCommune"),
-    profilePhone: document.getElementById("profilePhone"),
-    profileAddress: document.getElementById("profileAddress"),
-    profileEmergencyName: document.getElementById("profileEmergencyName"),
-    profileEmergencyPhone: document.getElementById("profileEmergencyPhone"),
+    profileEmail: document.getElementById("profileFormEmail"),
+    profileRut: document.getElementById("profileFormRut"),
+    profileFullName: document.getElementById("profileFormFullName"),
+    profileCommune: document.getElementById("profileFormCommune"),
+    profilePhone: document.getElementById("profileFormPhone"),
+    profileAddress: document.getElementById("profileFormAddress"),
+    profileEmergencyName: document.getElementById("profileFormEmergencyName"),
+    profileEmergencyPhone: document.getElementById("profileFormEmergencyPhone"),
     pwdCurrent: document.getElementById("pwdCurrent"),
     pwdNew: document.getElementById("pwdNew")
   };
@@ -101,8 +101,9 @@
         event.preventDefault();
         const reportId = Number(quickStatusBtn.getAttribute("data-report-id"));
         const nextStatus = quickStatusBtn.getAttribute("data-next-status");
+        const nextType = quickStatusBtn.getAttribute("data-next-type");
         if (Number.isFinite(reportId) && nextStatus) {
-          updateUserReportStatus(reportId, nextStatus);
+          updateUserReportStatus(reportId, nextStatus, nextType || null);
         }
         return;
       }
@@ -213,16 +214,42 @@
   }
 
   function profileFields() {
+    const form = document.getElementById("profileForm");
+    const q = (id) => (form ? form.querySelector(`#${id}`) : null) || document.getElementById(id);
     return {
-      profileEmail: document.getElementById("profileEmail"),
-      profileRut: document.getElementById("profileRut"),
-      profileFullName: document.getElementById("profileFullName"),
-      profileCommune: document.getElementById("profileCommune"),
-      profilePhone: document.getElementById("profilePhone"),
-      profileAddress: document.getElementById("profileAddress"),
-      profileEmergencyName: document.getElementById("profileEmergencyName"),
-      profileEmergencyPhone: document.getElementById("profileEmergencyPhone")
+      profileEmail: q("profileFormEmail"),
+      profileRut: q("profileFormRut"),
+      profileFullName: q("profileFormFullName"),
+      profileCommune: q("profileFormCommune"),
+      profilePhone: q("profileFormPhone"),
+      profileAddress: q("profileFormAddress"),
+      profileEmergencyName: q("profileFormEmergencyName"),
+      profileEmergencyPhone: q("profileFormEmergencyPhone")
     };
+  }
+
+  function syncProfileSidebar(profile) {
+    if (!profile) return;
+    const name = profile.fullName || profile.displayName || "—";
+    const email = profile.email || "—";
+    const phone = profile.phone || "—";
+    const location =
+      [profile.commune, profile.address].filter(Boolean).join(" · ") || "—";
+    const dn = document.getElementById("profileDisplayName");
+    if (dn) dn.textContent = profile.displayName || name;
+    const pe = document.getElementById("profileEmail");
+    if (pe) pe.textContent = email;
+    const pef = document.getElementById("profileEmailFull");
+    if (pef) pef.textContent = email;
+    const pfn = document.getElementById("profileFullName");
+    if (pfn) pfn.textContent = name;
+    const pp = document.getElementById("profilePhone");
+    if (pp) pp.textContent = phone;
+    const pl = document.getElementById("profileLocation");
+    if (pl) pl.textContent = location;
+    if (window.SANOS_PROFILE && typeof window.SANOS_PROFILE.loadProfileData === "function") {
+      window.SANOS_PROFILE.loadProfileData();
+    }
   }
 
   function normalizeProfile(raw) {
@@ -679,14 +706,26 @@
   function reportQuickAction(report) {
     const status = normalizeReportStatus(report.status);
     const type = String(report.type || "").toUpperCase();
+    const effective = core.effectiveReportType(report);
     if (status === "OPEN") {
-      const isLost = type === "LOST" || type === "PERDIDA";
+      const isLost =
+        effective === "LOST" ||
+        effective === "PERDIDA" ||
+        type === "LOST" ||
+        type === "PERDIDA";
       return {
         label: isLost ? "Marcar encontrado" : "Marcar cerrado",
         status: isLost ? "RESOLVED" : "CLOSED"
       };
     }
     if (status === "RESOLVED" || status === "CLOSED") {
+      const canMarkLostAgain =
+        (type === "FOUND" || type === "ENCONTRADA") && status === "RESOLVED" ||
+        (type === "LOST" || type === "PERDIDA") && (status === "RESOLVED" || status === "CLOSED");
+      if (canMarkLostAgain) {
+        const revertType = type === "FOUND" || type === "ENCONTRADA" ? "LOST" : null;
+        return { label: "Marcar perdida", status: "OPEN", type: revertType };
+      }
       return { label: "Reabrir", status: "OPEN" };
     }
     return null;
@@ -703,12 +742,16 @@
       { value: "RESOLVED", label: "Resuelto" },
       { value: "CLOSED", label: "Cerrado" }
     ];
-    const quickBtnClass =
-      quick && quick.label === "Marcar encontrado"
-        ? "btn profile-report-actions__found-btn"
-        : "btn btn-secondary";
+    let quickBtnClass = "btn btn-secondary";
+    if (quick && quick.label === "Marcar encontrado") {
+      quickBtnClass = "btn profile-report-actions__found-btn";
+    } else if (quick && quick.label === "Marcar perdida") {
+      quickBtnClass = "btn profile-report-actions__lost-btn";
+    }
+    const nextTypeAttr =
+      quick && quick.type ? ` data-next-type="${core.escapeHtml(quick.type)}"` : "";
     const quickBtn = quick
-      ? `<button class="${quickBtnClass} js-report-quick-status" type="button" data-report-id="${reportId}" data-next-status="${quick.status}">${core.escapeHtml(quick.label)}</button>`
+      ? `<button class="${quickBtnClass} js-report-quick-status" type="button" data-report-id="${reportId}" data-next-status="${quick.status}"${nextTypeAttr}>${core.escapeHtml(quick.label)}</button>`
       : "";
     const selectOptions = options
       .map(
@@ -815,14 +858,16 @@
       .join("");
   }
 
-  async function updateUserReportStatus(reportId, status) {
+  async function updateUserReportStatus(reportId, status, type) {
     const normalized = normalizeReportStatus(status);
+    const body = { status: normalized };
+    if (type) body.type = String(type).toUpperCase();
     try {
       setStatus("Actualizando estado del reporte…", false, true);
       await core.api(`/api/reports/${reportId}/status`, {
         method: "PATCH",
         token: state.session.token,
-        body: { status: normalized }
+        body
       });
       await refreshProfileHistory({ quiet: true });
       setStatus("Estado del reporte actualizado.");
@@ -848,6 +893,7 @@
     if (fields.profileEmergencyPhone) {
       fields.profileEmergencyPhone.value = profile.emergencyContactPhone || "";
     }
+    syncProfileSidebar(profile);
   }
 
   function mergeSessionUser(profile) {
@@ -871,6 +917,7 @@
     if (identity) {
       identity.textContent = state.session.user.displayName || state.session.user.email;
     }
+    syncProfileSidebar(p);
   }
 
   async function onSaveProfile(event) {

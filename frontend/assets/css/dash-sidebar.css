@@ -619,6 +619,18 @@
   color: #fff;
 }
 
+.profile-report-actions__lost-btn {
+  background: #d97706;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+}
+
+.profile-report-actions__lost-btn:hover {
+  background: #b45309;
+  color: #fff;
+}
+
 .profile-report-actions {
   display: grid;
   gap: 8px;

@@ -40,4 +40,4 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
   show-actuator: false
-  packages-to-scan: com.sanos.geointelligenceservice.controller, com.sanos.geointelligenceservice.dto, com.sanos.geointelligenceservice.model
+  packages-to-scan: com.sanos.geointelligenceservice.controller, com.sanos.geointelligenceservice.dto

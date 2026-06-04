@@ -7,7 +7,12 @@ public record UpdateStatusRequest(
         @Schema(
                 description = "Nuevo estado del reporte",
                 example = "OPEN",
-                allowableValues = {"OPEN", "CLOSED", "ABIERTO", "CERRADO"},
+                allowableValues = {"OPEN", "CLOSED", "ABIERTO", "CERRADO", "RESOLVED", "RESUELTO"},
                 requiredMode = Schema.RequiredMode.REQUIRED)
-        String status
+        String status,
+        @Schema(
+                description = "Tipo opcional (LOST | FOUND). Permite volver a marcar perdida tras encontrada.",
+                example = "LOST",
+                allowableValues = {"LOST", "FOUND", "PERDIDA", "ENCONTRADA"})
+        String type
 ) {}

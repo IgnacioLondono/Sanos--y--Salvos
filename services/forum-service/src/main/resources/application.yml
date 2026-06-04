@@ -36,4 +36,4 @@ springdoc:
     operationsSorter: method
     tagsSorter: alpha
   show-actuator: false
-  packages-to-scan: com.sanos.forumservice.controller, com.sanos.forumservice.dto, com.sanos.forumservice.model
+  packages-to-scan: com.sanos.forumservice.controller, com.sanos.forumservice.dto

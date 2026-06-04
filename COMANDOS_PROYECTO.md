@@ -52,7 +52,7 @@ Formulario en `http://localhost:5173/register.html`. No requiere rebuild de back
 
 ### Admin: acceso denegado sin cerrar sesión ciudadana
 
-Un ciudadano logueado que abra `/pages/admin/admin-resumen.html` verá `acceso-denegado.html` y conservará su sesión. Para probar admin, usa login admin o cuenta con rol `ADMIN`.
+Un ciudadano logueado que abra `/pages/admin/admin-resumen.html` verá `404.html` (página no encontrada) y conservará su sesión. Para probar admin, usa login admin o cuenta con rol `ADMIN`.
 
 ## 1) Docker - ciclo principal
 
