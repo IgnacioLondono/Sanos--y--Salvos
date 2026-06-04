@@ -308,6 +308,40 @@ frontend/
 
 Vistas con mapa: **Hacer reporte**, **Mapa** (ciudadano) y **Mapa y zonas** (admin). Requieren `googleMapsApiKey` en `frontend/src/core/config.js` (Maps JavaScript API). Sin clave, el contenedor muestra un aviso de configuración.
 
+### Solicitudes de contacto, chat e historial (mapa)
+
+Flujo para que un ciudadano **solicite contacto** con el dueño de un reporte; el dueño **acepta o rechaza**. Si acepta, se abre un **chat**; solo quien **recibió** la solicitud (dueño del reporte) puede **cerrar** el chat y pasa a **historial**.
+
+| Paso | Quién | Qué ocurre |
+|------|--------|------------|
+| 1 | Usuario B (emisor) | En **Mapa**, popup de reporte ajeno → mensaje (mín. 10 caracteres) → **Enviar solicitud**. |
+| 2 | Sistema | Crea `PENDING` en `solicitudes_contacto`. |
+| 3 | Usuario A (receptor / dueño) | Pestaña **Recibidas**; badge con pendientes. |
+| 4 | Usuario A | **Aceptar y abrir chat** (`ACCEPTED`) o **Rechazar** (`REJECTED`). |
+| 5 | Sistema | Al aceptar: conversación `OPEN` en `conversaciones_contacto` + mensajes iniciales en `mensajes_contacto`. |
+| 6 | Ambos | Pestaña **Chats activos** → ver/enviar mensajes. Usuario B ve estado en **Enviadas**. |
+| 7 | Usuario A | **Cerrar chat** → conversación `CLOSED`; aparece en **Historial** (solo lectura). |
+
+**Panel en mapa:** pestañas **Recibidas** | **Enviadas** | **Chats activos** | **Historial**.
+
+**Reglas de negocio:**
+
+- No se puede enviar solicitud al propio reporte.
+- Solo una solicitud `PENDING` por par (reporte + emisor).
+- Solo el receptor responde la solicitud; solo el receptor cierra el chat.
+- Con chat cerrado no se pueden enviar mensajes nuevos.
+
+**API:** Postman más abajo; Swagger en `reports-service` (tags **Solicitudes de contacto** y **Conversaciones de contacto**).  
+**Frontend:** `frontend/src/core/map-contact.js`, `citizen-mapa.html`.
+
+### Registro con confirmación de contraseña
+
+En `/register.html` el formulario exige **Contraseña** y **Confirmar contraseña**. La validación en `register-auth.js` rechaza el envío si no coinciden (además de las reglas de contraseña fuerte ya existentes).
+
+### Acceso a panel admin (sin cerrar sesión ciudadana)
+
+Si un usuario con sesión **ciudadana** intenta abrir una URL de administrador (`/pages/admin/*`), **no se elimina** su sesión de ciudadano. Se redirige a `pages/acceso-denegado.html` con mensaje y enlace de vuelta al panel ciudadano. Solo se limpia la sesión admin si existía un token admin inválido (rol distinto de `ADMIN`).
+
 ---
 
 ## API y Swagger
@@ -563,6 +597,74 @@ Headers:
 
 `DELETE {{baseUrl}}/api/reports/1`
 
+### Solicitudes de contacto (mapa)
+
+#### Enviar solicitud
+
+`POST {{baseUrl}}/api/reports/contact-requests`
+
+```json
+{
+  "reportId": 1,
+  "fromUserId": 2,
+  "message": "Hola, vi tu reporte y creo que puedo ayudar."
+}
+```
+
+#### Bandeja de entrada (receptor)
+
+`GET {{baseUrl}}/api/reports/contact-requests/inbox?userId=1`
+
+#### Solicitudes enviadas
+
+`GET {{baseUrl}}/api/reports/contact-requests/sent?userId=2`
+
+#### Aceptar o rechazar
+
+`PATCH {{baseUrl}}/api/reports/contact-requests/1`
+
+```json
+{
+  "responderUserId": 1,
+  "status": "ACCEPTED"
+}
+```
+
+Estados: `PENDING`, `ACCEPTED`, `REJECTED`. En listados, si ya hay chat: campo `conversationId`.
+
+#### Listar conversaciones (chats activos o historial)
+
+`GET {{baseUrl}}/api/reports/contact-conversations?userId=1&status=OPEN`
+
+`status`: `OPEN`, `CLOSED` o `ALL`.
+
+#### Mensajes de un chat
+
+`GET {{baseUrl}}/api/reports/contact-conversations/1/messages?userId=1`
+
+#### Enviar mensaje en chat
+
+`POST {{baseUrl}}/api/reports/contact-conversations/1/messages`
+
+```json
+{
+  "authorUserId": 2,
+  "content": "¿Podemos vernos mañana en la plaza?"
+}
+```
+
+#### Cerrar chat (solo receptor / dueño del reporte)
+
+`PATCH {{baseUrl}}/api/reports/contact-conversations/1/close`
+
+```json
+{
+  "userId": 1
+}
+```
+
+Estados de conversación: `OPEN`, `CLOSED`.
+
 ### Zonas (Geo)
 
 #### Listar zonas
@@ -798,7 +900,7 @@ Se aplica 3FN con esquema por dominio:
 |---|---|
 | `db_iam` | `usuarios`, `credenciales`, `contactos_usuario` |
 | `db_pets` | `mascotas`, `caracteristicas_fisicas`, `vinculos_mascotas` |
-| `db_reports` | `reportes_eventos`, `detalles_reporte` |
+| `db_reports` | `reportes_eventos`, `detalles_reporte`, `solicitudes_contacto`, `conversaciones_contacto`, `mensajes_contacto` |
 | `db_geo` | `zonas_incidencia`, `coordenadas_reporte` |
 | `db_media` | `fotografias_mascotas` |
 | `db_matching` | `coincidencias_ia`, `desglose_similitud` |

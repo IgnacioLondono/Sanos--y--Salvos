@@ -607,6 +607,18 @@
   color: var(--text-soft);
 }
 
+.profile-report-actions__found-btn {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+}
+
+.profile-report-actions__found-btn:hover {
+  background: #15803d;
+  color: #fff;
+}
+
 .profile-report-actions {
   display: grid;
   gap: 8px;

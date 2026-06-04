@@ -76,6 +76,47 @@
           <span class="legend-item"><i data-lucide="circle" style="color:#f59e0b" aria-hidden="true"></i>Seleccion</span>
         </div>
       </section>
+
+      <section class="glass-card section section-compact reveal map-contact-panel">
+        <div class="section-head-min">
+          <div class="section-head-min__title">
+            <i data-lucide="messages-square" aria-hidden="true"></i>
+            <h2>Contacto y mensajes</h2>
+            <span class="map-contact-badge" id="mapContactBadge" hidden>0</span>
+          </div>
+          <p class="section-head-min__hint">Envía solicitudes en el mapa. Si te la aceptan (o aceptas una), se abre un chat. El dueño del reporte puede cerrarlo y queda en historial.</p>
+        </div>
+
+        <nav class="map-contact-tabs" role="tablist" aria-label="Contacto">
+          <button type="button" class="map-contact-tabs__btn is-active" role="tab" data-contact-tab="inbox" aria-selected="true">Recibidas</button>
+          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="sent">Enviadas</button>
+          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="chats">Chats activos</button>
+          <button type="button" class="map-contact-tabs__btn" role="tab" data-contact-tab="history">Historial</button>
+        </nav>
+
+        <div class="map-contact-hub__body" id="mapContactHub">
+          <div id="mapContactTabInbox" class="map-contact-tab-panel is-active" role="tabpanel"></div>
+          <div id="mapContactTabSent" class="map-contact-tab-panel" role="tabpanel" hidden></div>
+          <div id="mapContactTabChats" class="map-contact-tab-panel" role="tabpanel" hidden></div>
+          <div id="mapContactTabHistory" class="map-contact-tab-panel" role="tabpanel" hidden></div>
+
+          <div id="mapContactChatPanel" class="map-contact-chat hidden" aria-live="polite">
+          <header class="map-contact-chat__head">
+            <button type="button" class="btn btn-ghost btn-sm" id="mapContactChatBack">&larr; Volver</button>
+            <div>
+              <strong id="mapContactChatTitle">Chat</strong>
+              <span id="mapContactChatMeta" class="map-contact-chat__meta"></span>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm hidden" id="mapContactChatClose">Cerrar chat</button>
+          </header>
+          <div id="mapContactChatMessages" class="map-contact-chat__messages"></div>
+          <form id="mapContactChatForm" class="map-contact-chat__form">
+            <textarea id="mapContactChatInput" rows="2" maxlength="2000" placeholder="Escribe un mensaje…"></textarea>
+            <button type="submit" class="btn btn-primary btn-sm">Enviar</button>
+          </form>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -84,6 +125,7 @@
   <script src="../../src/core/config.js"></script>
   <script src="../../src/core/shared.js"></script>
   <script src="../../src/core/google-maps.js"></script>
+  <script src="../../src/core/map-contact.js"></script>
   <script src="../../src/ui/theme-ui.js"></script>
   <script src="../../src/layout/dash-layout.js"></script>
   <script src="../../src/citizen/citizen-dashboard.js"></script>
@@ -91,6 +133,7 @@
     if (window.SANOS_DASH_LAYOUT) window.SANOS_DASH_LAYOUT.init();
     if (window.lucide) lucide.createIcons();
     if (window.SANOS_THEME) window.SANOS_THEME.init();
+    if (window.SANOS_MAP_CONTACT) window.SANOS_MAP_CONTACT.initHub();
   </script>
 </body>
 </html>

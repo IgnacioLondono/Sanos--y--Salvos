@@ -93,7 +93,11 @@
   }
 
   function apiErrorMessage(status, path, data) {
+    const p = String(path || "");
     if (status === 401) {
+      if (p.includes("/api/iam/login")) {
+        return "Datos incorrectos, revise correo u contraseña";
+      }
       return "Sesión expirada o no válida. Cierra sesión e inicia de nuevo.";
     }
     return (
@@ -333,6 +337,25 @@
     };
   }
 
+  function normalizeReportStatusKey(status) {
+    const s = String(status || "").toUpperCase();
+    if (s === "ABIERTO" || s === "OPEN") return "OPEN";
+    if (s === "RESUELTO" || s === "RESOLVED") return "RESOLVED";
+    if (s === "CERRADO" || s === "CLOSED") return "CLOSED";
+    return s || "OPEN";
+  }
+
+  /** Tipo mostrado: perdida resuelta/cerrada se muestra como encontrada. */
+  function effectiveReportType(report) {
+    if (!report) return "";
+    const t = String(report.type || "").toUpperCase();
+    const s = normalizeReportStatusKey(report.status);
+    if ((t === "LOST" || t === "PERDIDA") && (s === "RESOLVED" || s === "CLOSED")) {
+      return "FOUND";
+    }
+    return t;
+  }
+
   function reportTypeLabel(type) {
     const t = String(type || "").toUpperCase();
     if (t === "LOST" || t === "PERDIDA") return "Perdida";
@@ -360,8 +383,8 @@
     const imageUrl = opts.imageUrl || "";
     const showId = opts.showId !== false;
     const petName = opts.petName || "";
-    const typeLabel = reportTypeLabel(report.type);
-    const typeKey = String(report.type || "").toUpperCase();
+    const typeKey = effectiveReportType(report);
+    const typeLabel = reportTypeLabel(typeKey);
     const badgeClass =
       typeKey === "LOST" || typeKey === "PERDIDA"
         ? "map-report-popup__badge--lost"
@@ -397,6 +420,8 @@
       ? `<p class="map-report-popup__date">${escapeHtml(formatMapDate(report.createdAt))}</p>`
       : "";
 
+    const contactHtml = opts.contactHtml || "";
+
     const layoutClass = hasImg ? " map-report-popup--has-img" : "";
 
     return `<div class="map-report-popup map-info-card${layoutClass}" style="background:#1e293b;color:#f1f5f9;">
@@ -410,8 +435,16 @@
         <p class="map-report-popup__meta-line">${escapeHtml(metaLine)}</p>
         ${descHtml}
         ${dateHtml}
+        ${contactHtml}
       </div>
     </div>`;
+  }
+
+  function forbiddenUrl() {
+    if (window.SANOS_PATHS && typeof window.SANOS_PATHS.page === "function") {
+      return window.SANOS_PATHS.root() + "pages/acceso-denegado.html";
+    }
+    return "./pages/acceso-denegado.html";
   }
 
   const mapReportPopupLeafletOpts = {
@@ -462,6 +495,7 @@
     mediaItemUrl,
     indexMediaByReportAndPet,
     reportTypeLabel,
+    effectiveReportType,
     reportStatusLabel,
     petNameById,
     buildMapReportPopup,
@@ -474,6 +508,7 @@
     formatDate,
     refreshIcons,
     navPage,
-    indexUrl
+    indexUrl,
+    forbiddenUrl
   };
 })();

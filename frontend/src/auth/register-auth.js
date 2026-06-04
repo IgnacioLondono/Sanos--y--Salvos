@@ -6,6 +6,7 @@
     rutDocument: document.getElementById("rutDocument"),
     email: document.getElementById("email"),
     password: document.getElementById("password"),
+    passwordConfirm: document.getElementById("passwordConfirm"),
     commune: document.getElementById("commune"),
     phone: document.getElementById("phone"),
     address: document.getElementById("address"),
@@ -34,6 +35,7 @@
     const rutDocument = normalizeRut(els.rutDocument.value);
     const email = els.email.value.trim().toLowerCase();
     const password = els.password.value.trim();
+    const passwordConfirm = els.passwordConfirm ? els.passwordConfirm.value.trim() : "";
     const commune = els.commune.value.trim();
     const phone = els.phone.value.trim();
     const address = els.address.value.trim();
@@ -45,6 +47,7 @@
       rutDocument,
       email,
       password,
+      passwordConfirm,
       commune,
       phone,
       address,
@@ -115,7 +118,11 @@
     }
 
     if (!isStrongPassword(model.password)) {
-      errors.push("La contrasena debe tener minimo 10 caracteres, mayuscula, minuscula, numero y simbolo.");
+      errors.push("La contraseña debe tener mínimo 10 caracteres, mayúscula, minúscula, número y símbolo.");
+    }
+
+    if (model.password !== model.passwordConfirm) {
+      errors.push("Las contraseñas no coinciden.");
     }
 
     if (!model.commune || model.commune.length < 3) {

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso denegado | Sanos y Salvos</title>
+  <link rel="stylesheet" href="../assets/css/styles.css" />
+  <link rel="stylesheet" href="../assets/css/styles-enhanced.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("sanos-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+</head>
+<body class="auth-page">
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <section class="auth-card glass-card reveal" style="max-width: 520px; margin: 4rem auto; text-align: center;">
+    <div class="auth-brand-ico" aria-hidden="true" style="margin: 0 auto 1rem;">
+      <img class="brand-logo" src="../assets/images/logo.png" alt="" width="56" height="56" />
+    </div>
+    <h1 class="auth-title">Acceso denegado</h1>
+    <p class="auth-note" style="margin: 1rem 0 1.5rem;">
+      No tienes permisos para ver el panel de administración. Tu sesión de ciudadano sigue activa.
+    </p>
+    <div class="action-row auth-actions" style="justify-content: center; flex-wrap: wrap; gap: 0.75rem;">
+      <a class="btn btn-primary" id="btnBackCitizen" href="./pages/citizen/citizen-reporte.html">Volver al panel ciudadano</a>
+      <a class="btn btn-secondary" href="../index.html">Inicio</a>
+    </div>
+  </section>
+  <script src="../src/core/paths.js"></script>
+  <script>
+    (function () {
+      if (window.SANOS_PATHS) {
+        var el = document.getElementById("btnBackCitizen");
+        if (el) el.href = SANOS_PATHS.page("citizen-reporte.html");
+      }
+    })();
+  </script>
+</body>
+</html>

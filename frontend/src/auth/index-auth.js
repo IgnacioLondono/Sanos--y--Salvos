@@ -107,7 +107,11 @@
       showStatus("Sesion iniciada. Redirigiendo al dashboard ciudadano...");
       window.location.href = window.SANOS_PATHS ? SANOS_PATHS.page("citizen-reporte.html") : "./pages/citizen/citizen-reporte.html";
     } catch (error) {
-      showStatus(error.message, true);
+      const msg =
+        error.status === 401
+          ? "Datos incorrectos, revise correo u contraseña"
+          : error.message;
+      showStatus(msg, true);
     }
   }
 

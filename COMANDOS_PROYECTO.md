@@ -22,6 +22,38 @@ docker compose up -d frontend
 
 4. Recarga el navegador con **Ctrl+F5** en `http://localhost:5173`.
 
+## Funciones recientes (mapa, registro, seguridad)
+
+### Solicitudes de contacto en el mapa
+
+1. Levanta el stack (ver sección Docker abajo).
+2. Con dos usuarios ciudadanos, publica un reporte con el usuario A.
+3. Con el usuario B: **Mapa** → clic en marcador de A → mensaje → **Enviar solicitud**.
+4. Con el usuario A: panel **Solicitudes de contacto** → **Aceptar** o **Rechazar**.
+
+API (vía gateway `http://localhost:8080`):
+
+```http
+POST /api/reports/contact-requests
+GET  /api/reports/contact-requests/inbox?userId=1
+PATCH /api/reports/contact-requests/{id}
+```
+
+Tras cambios en `reports-service`:
+
+```powershell
+docker compose build reports-service
+docker compose up -d reports-service
+```
+
+### Registro: confirmar contraseña
+
+Formulario en `http://localhost:5173/register.html`. No requiere rebuild de backend; solo frontend si cambias HTML/JS.
+
+### Admin: acceso denegado sin cerrar sesión ciudadana
+
+Un ciudadano logueado que abra `/pages/admin/admin-resumen.html` verá `acceso-denegado.html` y conservará su sesión. Para probar admin, usa login admin o cuenta con rol `ADMIN`.
+
 ## 1) Docker - ciclo principal
 
 ### Levantar todo (build + up)

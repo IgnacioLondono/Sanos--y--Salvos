@@ -84,6 +84,9 @@ public class ReportService {
     public Optional<ReportDto> updateStatus(Long id, String newStatus) {
         return reporteRepo.findById(id).map(rep -> {
             rep.setEstado(newStatus);
+            if (isLostType(rep.getTipoReporte()) && isResolvedOrClosedStatus(newStatus)) {
+                rep.setTipoReporte("FOUND");
+            }
             ReporteEvento saved = reporteRepo.save(rep);
             detalleRepo.findByIdReporte(id).ifPresent(d -> {
                 d.setEstadoActual(newStatus);
@@ -101,6 +104,18 @@ public class ReportService {
         detalleRepo.findByIdReporte(id).ifPresent(detalleRepo::delete);
         reporteRepo.deleteById(id);
         return true;
+    }
+
+    private static boolean isLostType(String tipo) {
+        if (tipo == null || tipo.isBlank()) return false;
+        String t = tipo.trim().toUpperCase();
+        return "LOST".equals(t) || "PERDIDA".equals(t);
+    }
+
+    private static boolean isResolvedOrClosedStatus(String status) {
+        if (status == null || status.isBlank()) return false;
+        String s = status.trim().toUpperCase();
+        return "RESOLVED".equals(s) || "RESUELTO".equals(s) || "CLOSED".equals(s) || "CERRADO".equals(s);
     }
 
     private ReportDto toDto(ReporteEvento r) {

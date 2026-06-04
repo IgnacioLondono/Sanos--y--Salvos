@@ -49,6 +49,7 @@
     adminRut: document.getElementById("adminRut"),
     adminEmail: document.getElementById("adminEmail"),
     adminPassword: document.getElementById("adminPassword"),
+    adminPasswordConfirm: document.getElementById("adminPasswordConfirm"),
     adminCommune: document.getElementById("adminCommune"),
     adminPhone: document.getElementById("adminPhone"),
     reportsTable: document.getElementById("reportsTable"),
@@ -63,12 +64,21 @@
   init();
 
   function init() {
-    if (!state.session.token || !state.session.user) {
+    const adminSession = core.readSession("admin");
+    const citizenSession = core.readSession("citizen");
+    const adminRole = (adminSession.user && adminSession.user.role || "").toUpperCase();
+    const hasValidAdmin =
+      adminSession.token && adminSession.user && adminRole === "ADMIN";
+
+    if (hasValidAdmin) {
+      state.session = adminSession;
+    } else if (citizenSession.token && citizenSession.user) {
+      window.location.replace(core.forbiddenUrl());
+      return;
+    } else if (!adminSession.token || !adminSession.user) {
       window.location.href = core.indexUrl();
       return;
-    }
-
-    if ((state.session.user.role || "").toUpperCase() !== "ADMIN") {
+    } else {
       core.clearSession("admin");
       window.location.href = core.indexUrl();
       return;
@@ -692,20 +702,25 @@
 
   async function onCreateAdminSubmit(event) {
     event.preventDefault();
+    const password = els.adminPassword ? els.adminPassword.value : "";
+    const passwordConfirm = els.adminPasswordConfirm ? els.adminPasswordConfirm.value : "";
     const payload = {
       fullName: (els.adminFullName && els.adminFullName.value.trim()) || "",
       rutDocument: (els.adminRut && els.adminRut.value.trim()) || "",
       email: (els.adminEmail && els.adminEmail.value.trim()) || "",
-      password: els.adminPassword ? els.adminPassword.value : "",
+      password,
       commune: (els.adminCommune && els.adminCommune.value.trim()) || "Santiago",
       phone: (els.adminPhone && els.adminPhone.value.trim()) || ""
     };
 
-    if (!payload.fullName || !payload.rutDocument || !payload.email || !payload.password) {
-      return setStatus("Completa nombre, RUT, correo y contraseña.", true);
+    if (!payload.fullName || !payload.rutDocument || !payload.email || !password || !passwordConfirm) {
+      return setStatus("Completa nombre, RUT, correo y ambas contraseñas.", true);
     }
-    if (payload.password.length < 10) {
+    if (password.length < 10) {
       return setStatus("La contraseña debe tener al menos 10 caracteres.", true);
+    }
+    if (password !== passwordConfirm) {
+      return setStatus("Las contraseñas no coinciden.", true);
     }
 
     try {

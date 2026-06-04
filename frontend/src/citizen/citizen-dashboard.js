@@ -144,6 +144,7 @@
     }
 
     if (page === "mapa") {
+      window.SANOS_MAP_CONTACT_ON_UPDATE = () => refreshMapContactInbox();
       initMap().then(() => refreshMapa());
       return;
     }
@@ -480,28 +481,51 @@
     state.mapCtrl.clearMarkers();
     const bounds = [];
     const mediaIndex = core.indexMediaByReportAndPet(state.media);
+    const uid = userId();
+    const mapContact = window.SANOS_MAP_CONTACT;
 
     state.reports.forEach((report) => {
       if (report.latitude == null || report.longitude == null) return;
       const lat = Number(report.latitude);
       const lng = Number(report.longitude);
       if (Number.isNaN(lat) || Number.isNaN(lng)) return;
-      const isLost = String(report.type || "").toUpperCase() === "LOST";
+      const typeKey = core.effectiveReportType(report);
+      const isLost = typeKey === "LOST" || typeKey === "PERDIDA";
       const color = isLost ? "#c0392b" : "#3d8f73";
       const petName = report.petId ? core.petNameById(report.petId, state.pets) : "";
+      const contactHtml =
+        mapContact && uid ? mapContact.buildPopupActions(report, uid) : "";
       state.mapCtrl.addMarker(lat, lng, {
         color,
         scale: 8,
         popupHtml: core.buildMapReportPopup(report, {
           petName,
           imageUrl: mediaIndex.imageForReport(report),
-          showId: true
+          showId: true,
+          contactHtml
         })
       });
       bounds.push([lat, lng]);
     });
     if (bounds.length && state.mapMode !== "report-pick") {
       state.mapCtrl.fitPoints(bounds, 40);
+    }
+  }
+
+  async function refreshMapContactInbox() {
+    const mapContact = window.SANOS_MAP_CONTACT;
+    if (!mapContact || !userId()) return;
+    if (typeof mapContact.refreshAll === "function") {
+      await mapContact.refreshAll();
+      return;
+    }
+    const inboxEl = document.getElementById("mapContactTabInbox");
+    if (!inboxEl) return;
+    try {
+      const items = await mapContact.loadInbox(userId(), state.session.token);
+      mapContact.renderInbox(inboxEl, items, userId());
+    } catch (err) {
+      inboxEl.innerHTML = `<p class="map-contact-empty">${core.escapeHtml(err.message || "No se pudieron cargar las solicitudes.")}</p>`;
     }
   }
 
@@ -540,6 +564,7 @@
       state.media = media;
       state.pets = pets;
       renderReportsOnMap();
+      await refreshMapContactInbox();
       setStatus("Listo");
     } catch (error) {
       setStatus(error.message, true);
@@ -678,8 +703,12 @@
       { value: "RESOLVED", label: "Resuelto" },
       { value: "CLOSED", label: "Cerrado" }
     ];
+    const quickBtnClass =
+      quick && quick.label === "Marcar encontrado"
+        ? "btn profile-report-actions__found-btn"
+        : "btn btn-secondary";
     const quickBtn = quick
-      ? `<button class="btn btn-secondary js-report-quick-status" type="button" data-report-id="${reportId}" data-next-status="${quick.status}">${core.escapeHtml(quick.label)}</button>`
+      ? `<button class="${quickBtnClass} js-report-quick-status" type="button" data-report-id="${reportId}" data-next-status="${quick.status}">${core.escapeHtml(quick.label)}</button>`
       : "";
     const selectOptions = options
       .map(
@@ -700,9 +729,9 @@
     `;
   }
 
-  function reportTypeBadge(type) {
-    const t = String(type || "").toUpperCase();
-    const label = formatReportType(type);
+  function reportTypeBadge(report) {
+    const t = core.effectiveReportType(report);
+    const label = formatReportType(t);
     const cls =
       t === "LOST" || t === "PERDIDA"
         ? "report-badge--lost"
@@ -733,8 +762,11 @@
     const petList = Array.isArray(pets) ? pets : state.pets || [];
 
     if (summary) {
-      const lost = list.filter((r) => String(r.type || "").toUpperCase() === "LOST").length;
-      const found = list.filter((r) => String(r.type || "").toUpperCase() === "FOUND").length;
+      const lost = list.filter((r) => core.effectiveReportType(r) === "LOST").length;
+      const found = list.filter((r) => {
+        const t = core.effectiveReportType(r);
+        return t === "FOUND" || t === "ENCONTRADA";
+      }).length;
       const open = list.filter((r) => {
         const s = String(r.status || "").toUpperCase();
         return s === "OPEN" || s === "ABIERTO";
@@ -770,7 +802,7 @@
         const petLabel = petNameById(report.petId, petList);
         return `<tr>
           <td>${core.escapeHtml(String(report.id || "—"))}</td>
-          <td>${reportTypeBadge(report.type)}</td>
+          <td>${reportTypeBadge(report)}</td>
           <td>${reportStatusBadge(report.status)}</td>
           <td>${core.escapeHtml(petLabel)}</td>
           <td>${core.escapeHtml(report.commune || "—")}</td>
