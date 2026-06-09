@@ -940,9 +940,23 @@ Ver `docs/XAMPP.md` y script:
 
 ## Pruebas y calidad
 
-El proyecto incluye pruebas unitarias en varios módulos (gateway, bff, iam, reports, forum, pet-catalog, geo, media, matching, audit y capacity).
+El proyecto incluye pruebas unitarias en **backend** (gateway, bff, iam, reports, forum, pet-catalog, geo, media, matching, audit y capacity) y **frontend** (Vitest sobre `frontend/src/lib/`).
 
-### Ejecutar todo
+### Frontend (Vitest, cobertura ≥ 60 %)
+
+```bash
+cd frontend
+npm install
+npm test
+npm run test:coverage
+```
+
+En **PowerShell** con política de ejecución restrictiva, usa `npm.cmd install`, `npm.cmd test`, etc.
+
+Reporte HTML: `frontend/coverage/index.html`  
+Informe PDF/Markdown: [`docs/INFORME_PRUEBAS_FRONTEND.md`](docs/INFORME_PRUEBAS_FRONTEND.md)
+
+### Backend — ejecutar todo
 
 ```bash
 mvn test -DskipITs

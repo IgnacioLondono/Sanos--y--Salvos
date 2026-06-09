@@ -3,14 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "description": "Frontend estatico del proyecto Sanos y Salvos",
+  "type": "module",
   "scripts": {
     "start": "http-server . -p 5173 -c-1",
     "serve": "http-server . -p 5173 -c-1",
-    "test": "vitest --environment jsdom"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
+    "happy-dom": "^20.10.2",
     "http-server": "^14.1.1",
-    "vitest": "^2.1.1",
-    "jsdom": "^25.0.1"
+    "vitest": "^3.2.4"
   }
 }

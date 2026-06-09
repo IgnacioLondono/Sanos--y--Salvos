@@ -132,11 +132,51 @@ MySQL host:       localhost:3307
 
 ## 3) Frontend (modo NPM local)
 
+### Desde la raiz del repo (cualquier carpeta con acceso a npm)
+
+```powershell
+npm run frontend:install
+npm test
+npm run test:watch
+npm run test:coverage
+npm run frontend:start
+```
+
+| Comando | Descripcion |
+|---------|-------------|
+| `npm test` | Ejecuta todas las pruebas del frontend |
+| `npm run test:watch` | Modo watch (re-ejecuta al guardar) |
+| `npm run test:coverage` | Pruebas + cobertura (falla si baja del 60 %) |
+| `npm run frontend:verify` | Alias de `test:coverage` (como `mvn verify`) |
+| `npm run frontend:install` | Instala dependencias en `frontend/` |
+| `npm run frontend:start` | Servidor en `http://localhost:5173` |
+
+### Desde la carpeta `frontend/` (alternativa directa)
+
 ```powershell
 cd frontend
 npm install
 npm run start
+npm test
+npm run test:coverage
 ```
+
+Servidor: alias equivalente `npm run serve`.
+
+### Pruebas unitarias (Vitest)
+
+Cobertura minima **60 %** sobre `frontend/src/lib/`.
+
+**Windows (PowerShell):** si aparece *«la ejecucion de scripts esta deshabilitada»*, usa `npm.cmd`:
+
+```powershell
+npm.cmd test
+npm.cmd run test:coverage
+```
+
+O, solo para la sesion actual: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+
+Informe de pruebas: `docs/INFORME_PRUEBAS_FRONTEND.md`
 
 ---
 
@@ -159,9 +199,35 @@ mvn -pl services/reports-service test
 
 ---
 
-## 5) Cobertura JaCoCo
+## 5) Cobertura de codigo
 
-### Generar cobertura por modulo
+### Frontend (Vitest + v8 — equivalente a JaCoCo en Java)
+
+Ejecuta pruebas y valida umbrales minimos (60 % lineas/funciones, 55 % ramas) sobre `frontend/src/lib/`.
+Falla si la cobertura queda por debajo, igual que `mvn verify` con JaCoCo.
+
+```powershell
+npm run test:coverage
+# alias equivalente a mvn verify del frontend:
+npm run frontend:verify
+```
+
+Desde `frontend/`:
+
+```powershell
+cd frontend
+npm run test:coverage
+```
+
+### Abrir reporte HTML del frontend
+
+```text
+frontend/coverage/index.html
+```
+
+Resumen JSON: `frontend/coverage/coverage-summary.json`
+
+### Backend (JaCoCo)
 
 ```powershell
 mvn -pl gateway verify -DskipITs
@@ -169,7 +235,7 @@ mvn -pl bff verify -DskipITs
 mvn -pl services/reports-service verify -DskipITs
 ```
 
-### Abrir reportes HTML
+### Abrir reportes HTML del backend
 
 ```text
 gateway/target/site/jacoco/index.html

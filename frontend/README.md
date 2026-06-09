@@ -33,6 +33,30 @@ Con **Docker** (nginx), las URLs cortas siguen valiendo: `/citizen-foro.html` 鈫
 
 Con `npx http-server`, usa las rutas completas bajo `/pages/...`.
 
+## Pruebas unitarias (Vitest)
+
+Cobertura m铆nima **60 %** sobre `src/lib/` (l贸gica de dominio del frontend).
+
+```bash
+cd frontend
+npm install
+npm test                 # ejecutar pruebas
+npm run test:coverage    # reporte HTML en coverage/index.html
+```
+
+**Windows (PowerShell):** si aparece *芦la ejecuci贸n de scripts est谩 deshabilitada禄*, usa `npm.cmd` en lugar de `npm`:
+
+```powershell
+cd frontend
+npm.cmd install
+npm.cmd test
+npm.cmd run test:coverage
+```
+
+O, solo para la sesi贸n actual: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+
+Informe para la evaluaci贸n: [`docs/INFORME_PRUEBAS_FRONTEND.md`](../docs/INFORME_PRUEBAS_FRONTEND.md).
+
 ## Scripts en cada p谩gina
 
 ```html
